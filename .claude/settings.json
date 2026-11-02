@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/Users/julio/Downloads/arquitetura_orientada_a_eventos/.venv/bin/python -)",
+      "Bash(grep -n \"pip-audit\\\\` no\\\\|VII |\" plan.md)",
+      "Bash(sed -i '' 's/\\(marcador `e2e`, duração configurável por env, padrão 5 min; 30 min para validação completa\\)/\\(marcador `e2e`, duração via env `E2E_DURACAO_S`, padrão 300 s; 1800 s para validação completa\\)/' tasks.md)",
+      "Bash(grep -rn \"patch fixo\\\\|versão fixa>\\\\|tag fixa>\\\\|7\\\\.9\\\\.x\\\\|carga_id\\\\`?\\\\|3.12-slim\\\\b\" .)",
+      "Bash(git checkout *)",
+      "Bash(.venv/bin/python -m pip install -q uv==0.13.6)",
+      "Bash(.venv/bin/uv --version)",
+      "Bash(.venv/bin/python -m pip uninstall -q -y uv)",
+      "Bash(.venv/bin/python -m venv .tools)",
+      "Bash(.tools/bin/python -m pip install -q uv==0.13.6)",
+      "Bash(.tools/bin/uv --version)",
+      "Bash(.venv/bin/python -c \"import sys;print\\(sys.version\\)\")"
+    ]
+  }
+}

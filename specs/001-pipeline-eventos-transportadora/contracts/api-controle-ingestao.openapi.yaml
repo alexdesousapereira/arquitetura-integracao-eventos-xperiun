@@ -1,0 +1,203 @@
+openapi: 3.1.0
+info:
+  title: API de Controle da Ingestão
+  version: 1.0.0
+  description: >
+    Monitora e controla o conector Kafka Connect que ingere os arquivos de eventos da pasta
+    `dados/eventos`. Rotas que alteram estado exigem o header `X-API-Key`.
+servers:
+  - url: http://localhost:8001
+tags:
+  - name: ingestao
+  - name: saude
+paths:
+  /api/v1/ingestao:
+    get:
+      tags: [ingestao]
+      summary: Status da ingestão
+      operationId: obterStatusIngestao
+      responses:
+        "200":
+          description: Status atual (inclui estado INEXISTENTE se o conector não foi criado)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusIngestao" }
+        "503": { $ref: "#/components/responses/ConnectIndisponivel" }
+    put:
+      tags: [ingestao]
+      summary: Cria ou atualiza (ativa) a ingestão com a configuração versionada
+      operationId: ativarIngestao
+      security: [{ ApiKey: [] }]
+      responses:
+        "200":
+          description: Conector já existia; configuração reaplicada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusIngestao" }
+        "201":
+          description: Conector criado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusIngestao" }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+        "502": { $ref: "#/components/responses/ErroConnect" }
+        "503": { $ref: "#/components/responses/ConnectIndisponivel" }
+    delete:
+      tags: [ingestao]
+      summary: Remove a ingestão (idempotente)
+      operationId: removerIngestao
+      security: [{ ApiKey: [] }]
+      responses:
+        "204": { description: Removida ou já inexistente }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+        "503": { $ref: "#/components/responses/ConnectIndisponivel" }
+  /api/v1/ingestao/pausar:
+    post:
+      tags: [ingestao]
+      summary: Pausa a ingestão (idempotente)
+      operationId: pausarIngestao
+      security: [{ ApiKey: [] }]
+      responses:
+        "202": { $ref: "#/components/responses/AcaoAceita" }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+        "404": { $ref: "#/components/responses/IngestaoInexistente" }
+        "503": { $ref: "#/components/responses/ConnectIndisponivel" }
+  /api/v1/ingestao/retomar:
+    post:
+      tags: [ingestao]
+      summary: Retoma a ingestão pausada (idempotente)
+      operationId: retomarIngestao
+      security: [{ ApiKey: [] }]
+      responses:
+        "202": { $ref: "#/components/responses/AcaoAceita" }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+        "404": { $ref: "#/components/responses/IngestaoInexistente" }
+        "503": { $ref: "#/components/responses/ConnectIndisponivel" }
+  /api/v1/ingestao/reiniciar:
+    post:
+      tags: [ingestao]
+      summary: Reinicia o conector e suas tarefas
+      operationId: reiniciarIngestao
+      security: [{ ApiKey: [] }]
+      responses:
+        "202": { $ref: "#/components/responses/AcaoAceita" }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+        "404": { $ref: "#/components/responses/IngestaoInexistente" }
+        "503": { $ref: "#/components/responses/ConnectIndisponivel" }
+  /health/live:
+    get:
+      tags: [saude]
+      summary: Processo vivo
+      operationId: live
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Saude" }
+  /health/ready:
+    get:
+      tags: [saude]
+      summary: Pronto (Kafka Connect acessível)
+      operationId: ready
+      responses:
+        "200":
+          description: Pronto
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Saude" }
+        "503":
+          description: Dependência indisponível
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Saude" }
+  /metrics:
+    get:
+      tags: [saude]
+      summary: Métricas no formato Prometheus
+      operationId: metrics
+      responses:
+        "200":
+          description: Texto Prometheus
+          content:
+            text/plain: { schema: { type: string } }
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  responses:
+    AcaoAceita:
+      description: Ação aceita; estado converge de forma assíncrona
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/StatusIngestao" }
+    NaoAutorizado:
+      description: Header X-API-Key ausente ou inválido
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problema" }
+    IngestaoInexistente:
+      description: Conector não existe; use PUT /api/v1/ingestao
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problema" }
+    ErroConnect:
+      description: Kafka Connect rejeitou a operação
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problema" }
+    ConnectIndisponivel:
+      description: Kafka Connect inacessível
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problema" }
+  schemas:
+    EstadoIngestao:
+      type: string
+      enum: [ATIVA, PAUSADA, COM_FALHA, INICIANDO, INEXISTENTE]
+    Tarefa:
+      type: object
+      required: [id, estado]
+      properties:
+        id: { type: integer }
+        estado: { type: string, examples: [RUNNING] }
+        erro: { type: [string, "null"], description: Trace resumido quando FAILED }
+    StatusIngestao:
+      type: object
+      required: [nome, estado, tarefas, arquivos, connect_disponivel, consultado_em]
+      properties:
+        nome: { type: string, examples: [arquivos-eventos-transportadora] }
+        estado: { $ref: "#/components/schemas/EstadoIngestao" }
+        tarefas:
+          type: array
+          items: { $ref: "#/components/schemas/Tarefa" }
+        arquivos:
+          type: object
+          required: [pendentes, em_backup, com_erro]
+          properties:
+            pendentes: { type: integer, minimum: 0 }
+            em_backup: { type: integer, minimum: 0 }
+            com_erro: { type: integer, minimum: 0 }
+        connect_disponivel: { type: boolean }
+        consultado_em: { type: string, format: date-time }
+    Saude:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [ok, degradado, indisponivel] }
+        dependencias:
+          type: object
+          additionalProperties: { type: string, enum: [ok, indisponivel] }
+    Problema:
+      description: RFC 9457 Problem Details
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        correlation_id: { type: string }

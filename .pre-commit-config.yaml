@@ -1,0 +1,19 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff check
+        entry: .venv/bin/ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff format
+        entry: .venv/bin/ruff format
+        language: system
+        types: [python]
+      - id: mypy
+        name: mypy --strict
+        entry: .venv/bin/mypy contratos/src simulador/src controle_ingestao/src api_consulta/src
+        language: system
+        types: [python]
+        pass_filenames: false

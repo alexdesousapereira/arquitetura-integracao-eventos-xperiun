@@ -1,0 +1,165 @@
+name: pipeline-eventos
+
+x-env: &env
+  env_file: .env
+
+networks:
+  pipeline:
+    name: pipeline-eventos
+
+volumes:
+  kafka-data:
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.9.10
+    hostname: kafka
+    networks: [pipeline]
+    ports:
+      - "${KAFKA_PORTA:-9092}:9092"
+    environment:
+      CLUSTER_ID: "Tl1Wn2y8Q6yQ0eJ5bV4s7w"
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:${KAFKA_PORTA:-9092}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 60000
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx768m"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server kafka:29092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.9.10
+    <<: *env
+    networks: [pipeline]
+    entrypoint: ["/bin/bash", "/scripts/criar-topicos.sh"]
+    volumes:
+      - ./infra/kafka/criar-topicos.sh:/scripts/criar-topicos.sh:ro
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
+
+  connect:
+    image: pipeline-eventos/connect:local
+    build:
+      context: infra/connect
+    hostname: connect
+    networks: [pipeline]
+    ports:
+      - "${CONNECT_PORTA:-8083}:8083"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
+      CONNECT_REST_PORT: 8083
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_GROUP_ID: connect-transportadora
+      CONNECT_CONFIG_STORAGE_TOPIC: _connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: _connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: _connect-status
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      # Só os plugins instalados (FilePulse); converters e SMTs nativos já estão no classpath.
+      CONNECT_PLUGIN_PATH: /usr/share/confluent-hub-components
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx1g"
+      CONNECT_LOG4J_ROOT_LOGLEVEL: INFO
+      CONNECT_LOG4J_LOGGERS: org.reflections=ERROR
+    volumes:
+      - ./dados/eventos:/data/eventos
+      - ./dados/backup:/data/backup
+      - ./dados/erros:/data/erros
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf localhost:8083/connector-plugins | grep -q FilePulseSourceConnector"]
+      interval: 10s
+      timeout: 10s
+      retries: 18
+      start_period: 40s
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  controle-ingestao:
+    image: pipeline-eventos/controle-ingestao:local
+    build:
+      context: .
+      dockerfile: controle_ingestao/Dockerfile
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    <<: *env
+    networks: [pipeline]
+    ports:
+      - "${CONTROLE_PORTA:-8001}:8000"
+    volumes:
+      - ./dados/eventos:/data/eventos:ro
+      - ./dados/backup:/data/backup:ro
+      - ./dados/erros:/data/erros:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live', timeout=2)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    depends_on:
+      connect:
+        condition: service_healthy
+    restart: unless-stopped
+
+  api-consulta:
+    image: pipeline-eventos/api-consulta:local
+    build:
+      context: .
+      dockerfile: api_consulta/Dockerfile
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    <<: *env
+    networks: [pipeline]
+    ports:
+      - "${CONSULTA_PORTA:-8002}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live', timeout=2)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  simulador:
+    image: pipeline-eventos/simulador:local
+    build:
+      context: .
+      dockerfile: simulador/Dockerfile
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    profiles: [simulacao]
+    <<: *env
+    environment:
+      SIMULADOR_METRICS_PORT: 9100
+    networks: [pipeline]
+    ports:
+      - "${SIMULADOR_METRICS_PORT:-9100}:9100"
+    volumes:
+      - ./dados/eventos:/app/dados/eventos

@@ -1,0 +1,30 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+
+# Ferramentas
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Configuração local (segredos)
+.env
+
+# Dados de simulação (mantém só a estrutura de pastas)
+dados/**/*
+!dados/**/
+!dados/**/.gitkeep
+
+# Sistema/IDE
+.DS_Store
+*.swp
+.idea/
+
+requisitos/

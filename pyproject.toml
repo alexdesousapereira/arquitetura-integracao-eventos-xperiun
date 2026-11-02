@@ -1,0 +1,97 @@
+[project]
+name = "pipeline-eventos-transportadora"
+version = "0.1.0"
+description = "Pipeline orientado a eventos de uma transportadora (simulação local)."
+requires-python = ">=3.12"
+dependencies = [
+    "contratos",
+    "simulador",
+    "controle-ingestao",
+    "api-consulta",
+]
+
+[dependency-groups]
+dev = [
+    "uv==0.13.6",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "respx>=0.21",
+    "jsonschema>=4.23",
+    "testcontainers[kafka]>=4.8",
+    "pip-audit>=2.7",
+    "pre-commit>=4.0",
+    "httpx>=0.28",
+    "pyyaml>=6.0",
+    "types-PyYAML>=6.0",
+    "types-jsonschema>=4.23",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["contratos", "simulador", "controle_ingestao", "api_consulta"]
+
+[tool.uv.sources]
+contratos = { workspace = true }
+simulador = { workspace = true }
+controle-ingestao = { workspace = true }
+api-consulta = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".specify", ".claude", ".tools"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "S", "RUF", "D", "T20"]
+ignore = ["D100", "D104", "D107"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["contratos", "simulador", "controle_ingestao", "api_consulta", "tests_e2e"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["D", "S101", "S108", "S311", "T20"]
+"tests_e2e/**" = ["D", "S101", "S108", "S311", "S603", "S607", "T20"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+mypy_path = ["contratos/src", "simulador/src", "controle_ingestao/src", "api_consulta/src"]
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = ["aiokafka.*", "testcontainers.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "integration: testes que sobem Kafka via testcontainers (requer Docker)",
+    "e2e: testes ponta a ponta contra o ambiente `make up`",
+]
+addopts = "-m 'not integration and not e2e' --import-mode=importlib"
+pythonpath = ["."]
+testpaths = [
+    "contratos/tests",
+    "simulador/tests",
+    "controle_ingestao/tests",
+    "api_consulta/tests",
+    "tests_e2e",
+]
+
+[tool.coverage.run]
+source = ["contratos", "simulador", "controle_ingestao", "api_consulta"]
+omit = ["*/__main__.py", "*/main.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
