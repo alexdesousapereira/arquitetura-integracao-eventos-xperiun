@@ -67,6 +67,7 @@ class Simulacao:
         self.parar = parar or threading.Event()
         self._dormir = dormir or self.parar.wait
         self._ativos: list[PedidoSimulado] = []
+        self._liberado_em: list[float] = []  # quando cada pedido pode avançar
         self._eventos = 0
         self._concluidos = 0
 
@@ -87,8 +88,10 @@ class Simulacao:
         return bool(cfg.duracao_s and self._monotonico() - inicio >= cfg.duracao_s)
 
     def _ciclo(self, inicio: float) -> None:
-        quantidade = max(1, len(self._ativos) // FRACAO_POR_CICLO)
-        for indice in self.gerador.rng.sample(range(len(self._ativos)), quantidade):
+        agora = self._monotonico()
+        prontos = [i for i, liberado in enumerate(self._liberado_em) if liberado <= agora]
+        quantidade = min(len(prontos), max(1, len(self._ativos) // FRACAO_POR_CICLO))
+        for indice in self.gerador.rng.sample(prontos, quantidade):
             if self._limite_atingido(inicio):
                 return
             pedido = self._ativos[indice]
@@ -96,6 +99,8 @@ class Simulacao:
             if evento is not None:
                 self.escritor.gravar(evento)
                 self._eventos += 1
+                # o pedido (ou o que o substitui ao concluir) fica neste status pelo atraso
+                self._liberado_em[indice] = agora + self.config.atraso_status_s
                 EVENTOS_GERADOS.labels(event_type=evento.event_type.value).inc()
                 log.debug(
                     "evento_gerado",
@@ -113,6 +118,7 @@ class Simulacao:
         self._ativos = [self._novo_pedido() for _ in range(self.config.pedidos)]
         PEDIDOS_ATIVOS.set(len(self._ativos))
         inicio = self._monotonico()
+        self._liberado_em = [inicio] * len(self._ativos)
         ultimo_resumo = inicio
         log.info("simulacao_iniciada", **self.config.model_dump(mode="json"))
         while not self.parar.is_set() and not self._limite_atingido(inicio):

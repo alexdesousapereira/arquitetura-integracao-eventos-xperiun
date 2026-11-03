@@ -35,7 +35,7 @@ AUTH = -H "X-API-Key: $(CONTROLE_API_KEY)"
 .DEFAULT_GOAL := help
 .PHONY: help install lint format test test-integracao test-e2e test-e2e-simulacao ci build scan \
 	up down clean logs status pastas topicos topicos-offsets consumir dlq \
-	publicar-evento-teste publicar-evento-invalido simular validar-eventos \
+	publicar-evento-teste publicar-evento-invalido simular simular-aula validar-eventos \
 	ingestao-status ingestao-ativar ingestao-pausar ingestao-retomar ingestao-reiniciar \
 	ingestao-remover consulta-resumo consulta-pedidos consulta-consumo \
 	notificador notificador-logs notificador-parar notificador-escalar notificador-grupo
@@ -142,6 +142,11 @@ publicar-evento-invalido: ## Publica JSON válido fora do contrato (sem pedido_i
 # ---------------------------------------------------------------- simulador
 simular: pastas ## Executa o simulador (padrão: 10 eventos; ARGS="--continuo" para rodar sem parar)
 	$(COMPOSE) --profile simulacao run --rm --service-ports simulador $(ARGS)
+
+ATRASO ?= 10
+simular-aula: pastas ## Um pedido por vez, ATRASO=10 s entre cada mudança de status (demo no Telegram)
+	$(COMPOSE) --profile simulacao run --rm --service-ports simulador \
+		--pedidos 1 --atraso-status-s $(ATRASO) --continuo $(ARGS)
 
 validar-eventos: ## Valida os JSON em dados/eventos e dados/backup contra o contrato
 	$(UV) run python -m contratos.validar dados/eventos dados/backup

@@ -42,3 +42,7 @@ def test_cli_erro_de_io_sai_com_um(tmp_path: Path) -> None:
         assert main(["--saida", str(ro), "--max-eventos", "1", "--intervalo-ms", "10"]) == 1
     finally:
         ro.chmod(0o700)
+
+
+def test_cli_atraso_status_negativo_e_invalido(tmp_path: Path) -> None:
+    assert main(["--saida", str(tmp_path), "--atraso-status-s", "-1"]) == 2

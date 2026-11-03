@@ -40,7 +40,7 @@ def _simulacao(
     escritor: EscritorMemoria,
     relogio: RelogioFalso,
     parar: threading.Event | None = None,
-    **cfg: int | bool,
+    **cfg: float | bool,
 ) -> Simulacao:
     config = ConfigSimulador(seed=10, **cfg)  # type: ignore[arg-type]
     return Simulacao(
@@ -138,3 +138,26 @@ def test_ordem_por_pedido_preservada() -> None:
         por_pedido.setdefault(evento.pedido_id, []).append(evento.occurred_at)
     for ocorrencias in por_pedido.values():
         assert ocorrencias == sorted(ocorrencias)
+
+
+def test_atraso_status_espaca_eventos_do_mesmo_pedido() -> None:
+    relogio = RelogioFalso()
+    escritor = EscritorMemoria()
+    _simulacao(
+        escritor, relogio, pedidos=1, intervalo_ms=500, atraso_status_s=5, max_eventos=6
+    ).executar()
+    assert len(escritor.eventos) == 6
+    instantes = [e.occurred_at for e in escritor.eventos]
+    for anterior, seguinte in itertools.pairwise(instantes):
+        assert seguinte - anterior >= timedelta(seconds=5)
+
+
+def test_atraso_status_nao_trava_outros_pedidos() -> None:
+    relogio = RelogioFalso()
+    escritor = EscritorMemoria()
+    _simulacao(
+        escritor, relogio, pedidos=3, intervalo_ms=500, atraso_status_s=5, max_eventos=3
+    ).executar()
+    # um pedido por ciclo: os três primeiros eventos saem de pedidos diferentes, sem esperar
+    assert len({e.pedido_id for e in escritor.eventos}) == 3
+    assert relogio.monotonico < 5

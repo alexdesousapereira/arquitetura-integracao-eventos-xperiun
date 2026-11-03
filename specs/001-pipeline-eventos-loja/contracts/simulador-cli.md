@@ -8,6 +8,7 @@ python -m simulador [opções]
 |-----------------------|----------------------------|------------------|--------------------------------------------------------|
 | `--pedidos N`          | `SIMULADOR_PEDIDOS`         | `20`             | Pedidos simultâneas mantidas em andamento               |
 | `--intervalo-ms MS`   | `SIMULADOR_INTERVALO_MS`   | `500`            | Intervalo entre ciclos; a cada ciclo pedidos sorteadas avançam uma etapa |
+| `--atraso-status-s S` | `SIMULADOR_ATRASO_STATUS_S`| `0` (sem espera) | Tempo mínimo que cada pedido fica em um status antes do próximo evento |
 | `--duracao-s S`       | `SIMULADOR_DURACAO_S`      | `0` (infinito)   | Encerra após S segundos                                |
 | `--max-eventos N`     | `SIMULADOR_MAX_EVENTOS`    | `0` (infinito)   | Encerra após N eventos                                 |
 | `--saida DIR`         | `SIMULADOR_SAIDA`          | `dados/eventos`  | Pasta de destino dos arquivos JSON                     |

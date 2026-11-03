@@ -16,6 +16,7 @@ class ConfigSimulador(BaseSettings):
 
     pedidos: Annotated[int, Field(ge=1)] = 3
     intervalo_ms: Annotated[int, Field(ge=10)] = 500
+    atraso_status_s: Annotated[float, Field(ge=0)] = 0
     duracao_s: Annotated[int, Field(ge=0)] = 0
     max_eventos: Annotated[int, Field(ge=1)] = 10
     continuo: bool = False

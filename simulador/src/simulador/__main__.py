@@ -26,6 +26,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--pedidos", type=int, help="pedidos simultâneos")
     p.add_argument("--intervalo-ms", type=int, help="intervalo entre ciclos")
+    p.add_argument(
+        "--atraso-status-s",
+        type=float,
+        help="tempo mínimo que cada pedido fica em um status antes de avançar (0 = sem espera)",
+    )
     p.add_argument("--duracao-s", type=int, help="encerra após S segundos (0 = sem limite)")
     p.add_argument("--max-eventos", type=int, help="encerra após N eventos (padrão 10)")
     p.add_argument(
