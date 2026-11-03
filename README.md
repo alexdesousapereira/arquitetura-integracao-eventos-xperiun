@@ -58,10 +58,103 @@ O contrato completo está em [contratos/](contratos/) (modelos Pydantic + JSON S
 
 ## Pré-requisitos
 
-- Docker Engine 24+ (ou Docker Desktop/Colima) com Docker Compose v2 e ~4 GB de RAM livres
-- GNU Make, `curl` e `jq`
-- Para testes e ferramentas locais: Python 3.12 e [uv](https://docs.astral.sh/uv/)
-  (`make install` cria o `.venv`)
+| Ferramenta | Para quê | Obrigatória? |
+|---|---|---|
+| Docker Engine 24+ com Docker Compose v2 (~4 GB de RAM livres para o Docker) | sobe Kafka, Connect, APIs, simulador e bot | sim |
+| GNU Make, `curl`, `jq` | atalhos `make ...` e consultas às APIs | sim |
+| Git | clonar o repositório | sim |
+| Python 3.12 + [uv](https://docs.astral.sh/uv/) | testes, lint e rodar serviços fora do Docker | só para desenvolvimento |
+
+Tudo o que roda na aula (Kafka, APIs, simulador, bot) roda **dentro de containers**: para só
+executar a simulação, Docker + Make + `curl` + `jq` bastam. Python e uv são necessários apenas
+para `make test`, `make lint` e afins.
+
+### Windows (10/11)
+
+O Makefile usa comandos de shell Unix (`mkdir -p`, `chmod`, `find`), então no Windows o caminho
+recomendado é o **WSL 2** com Ubuntu.
+
+1. Instale o WSL 2 com Ubuntu. No PowerShell **como administrador**:
+
+   ```powershell
+   wsl --install -d Ubuntu
+   ```
+
+   Reinicie o computador quando pedido e, ao abrir o Ubuntu pela primeira vez, crie usuário e senha.
+2. Instale o [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/).
+   Em *Settings → General*, deixe marcado **Use the WSL 2 based engine**; em
+   *Settings → Resources → WSL integration*, ative a integração com o **Ubuntu**.
+3. No terminal do Ubuntu, instale as ferramentas:
+
+   ```bash
+   sudo apt update && sudo apt install -y make curl jq git
+   ```
+
+4. Clone o projeto **dentro do sistema de arquivos do Linux** (ex.: `~/aula`), não em `/mnt/c/...`
+   nem em pasta do OneDrive: fora do Linux o Connect fica lento para ver os arquivos novos e as
+   permissões de `dados/` não funcionam.
+
+   ```bash
+   mkdir -p ~/aula && cd ~/aula
+   git clone <url-do-repositorio> pipeline-eventos && cd pipeline-eventos
+   ```
+
+5. Para abrir o projeto no VS Code a partir do Ubuntu: `code .` (com a extensão **WSL** instalada).
+
+### macOS
+
+1. Instale o [Homebrew](https://brew.sh/), se ainda não tiver.
+2. Instale o [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/) (ou o
+   Colima: `brew install colima docker docker-compose && colima start --memory 4`).
+   No Docker Desktop, reserve pelo menos 4 GB em *Settings → Resources*.
+3. Ferramentas:
+
+   ```bash
+   xcode-select --install          # traz make e git
+   brew install jq                 # curl já vem no macOS
+   ```
+
+### Linux (Ubuntu/Debian)
+
+1. Instale o Docker Engine e o plugin Compose seguindo a
+   [documentação oficial](https://docs.docker.com/engine/install/ubuntu/) e permita usar o Docker
+   sem `sudo`:
+
+   ```bash
+   sudo usermod -aG docker $USER   # depois saia e entre de novo na sessão
+   ```
+
+2. Ferramentas:
+
+   ```bash
+   sudo apt update && sudo apt install -y make curl jq git
+   ```
+
+### Python 3.12 e uv (opcional — só para desenvolvimento)
+
+O uv instala o próprio Python 3.12, então não é preciso instalar Python à parte. No Linux, macOS
+ou WSL:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# feche e abra o terminal para o comando `uv` entrar no PATH
+uv sync                          # cria o .venv com Python 3.12 e todas as dependências
+```
+
+Depois do primeiro `uv sync`, `make install`, `make test` e `make lint` usam o uv do `.venv`.
+
+### Conferindo a instalação
+
+```bash
+docker --version                 # 24 ou superior
+docker compose version           # v2.x
+docker run --rm hello-world      # o daemon está no ar e acessível sem sudo
+make --version && curl --version && jq --version
+uv --version                     # opcional
+```
+
+Se o `docker run hello-world` falhar, o Docker Desktop provavelmente não está aberto (Windows/macOS)
+ou o usuário não está no grupo `docker` (Linux).
 
 ## Configuração
 
@@ -92,6 +185,7 @@ Opções do simulador (`make simular ARGS="..."`):
 |---|---|---|
 | `--pedidos N` | 3 | pedidos em andamento ao mesmo tempo |
 | `--intervalo-ms MS` | 500 | intervalo entre ciclos (a cada ciclo ~10% dos pedidos avançam uma etapa, no mínimo 1) |
+| `--atraso-status-s S` | 0 (sem espera) | tempo mínimo que cada pedido fica em um status antes de avançar (aceita fração, ex.: `2.5`) |
 | `--max-eventos N` | 10 | encerra após N eventos |
 | `--duracao-s S` | 0 (sem limite) | encerra após S segundos |
 | `--continuo` | desligado | roda até `Ctrl+C`, ignorando `--max-eventos` e `--duracao-s` |
@@ -100,6 +194,19 @@ Opções do simulador (`make simular ARGS="..."`):
 
 Exemplo: `make simular ARGS="--pedidos 20 --duracao-s 120 --seed 42"`.
 `Ctrl+C` encerra o simulador sem deixar arquivos parciais.
+
+**Mudança de status em câmera lenta.** Com `--atraso-status-s`, cada pedido espera esse tempo
+entre um evento e o próximo (criado → pagamento → enviado); quando um pedido termina, o seguinte
+também só começa depois do atraso. Para a aula há um atalho, que gera um pedido por vez até
+`Ctrl+C`:
+
+```bash
+make simular-aula            # 10 s entre cada mudança de status
+make simular-aula ATRASO=5   # outro intervalo
+```
+
+Com mais de um pedido (`make simular ARGS="--pedidos 3 --atraso-status-s 10 --continuo"`), os
+pedidos avançam de forma intercalada, mas cada um respeita o próprio atraso.
 
 Fora do Docker, o simulador também roda direto: `uv run python -m simulador --pedidos 3 --seed 42`.
 
@@ -199,6 +306,10 @@ Com o ambiente no ar (`make up`, `make ingestao-ativar`) e o bot ligado (`make n
 
 1. **Ponta a ponta.** `make simular` e as mensagens chegam no grupo: arquivo JSON → Connect →
    Kafka → bot → Telegram.
+   Para os alunos verem um pedido mudar de status ao vivo, use `make simular-aula`: chega
+   "🛒 Novo pedido", 10 s depois "✅ Pagamento aprovado" (ou a recusa), mais 10 s e
+   "📦 Pedido enviado". Em paralelo, `curl -s localhost:8002/api/v1/pedidos/<pedido_id> | jq .status`
+   mostra o mesmo status mudando na API.
 2. **Dois consumidores, um tópico.** `make consulta-resumo` mostra os mesmos eventos na API. Cada
    um tem sua própria posição de leitura no tópico; um não "consome" a mensagem do outro.
 3. **O bot retoma de onde parou.** `make notificador-parar`, `make simular` e
@@ -233,6 +344,7 @@ Com o ambiente no ar (`make up`, `make ingestao-ativar`) e o bot ligado (`make n
 | `make up` / `make down` / `make clean` | sobe / derruba / derruba e apaga volumes e `dados/` (inclusive o backup) |
 | `make status` / `make logs S=<serviço>` | estado dos containers / logs |
 | `make simular ARGS=...` | executa o simulador em container |
+| `make simular-aula ATRASO=10` | um pedido por vez, com `ATRASO` segundos entre cada mudança de status |
 | `make validar-eventos` | valida os JSON de `dados/eventos` e `dados/backup` contra o contrato |
 | `make ingestao-*` | operam a ingestão via API de controle (ver acima) |
 | `make topicos` / `make topicos-offsets` | configuração dos tópicos / offsets inicial e final por partição |
