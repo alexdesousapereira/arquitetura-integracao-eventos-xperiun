@@ -15,8 +15,8 @@ class ConfigControle(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore")
 
     connect_url: str = "http://connect:8083"
-    conector_nome: str = "arquivos-eventos-transportadora"
-    conector_config_path: Path = Path("conectores/arquivos-eventos-transportadora.json")
+    conector_nome: str = "arquivos-eventos-loja"
+    conector_config_path: Path = Path("conectores/arquivos-eventos-loja.json")
     controle_api_key: SecretStr
     kafka_bootstrap: str = "kafka:29092"
     pasta_eventos: Path = Path("/data/eventos")

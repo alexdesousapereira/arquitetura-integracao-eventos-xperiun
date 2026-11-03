@@ -61,9 +61,9 @@ class Gerador:
         """UUID v4 derivado do RNG (reprodutível com a mesma semente)."""
         return uuid.UUID(int=self.rng.getrandbits(128), version=4)
 
-    def carga_id(self) -> str:
-        """Identificador `CRG-` seguido de 8 dígitos hexadecimais maiúsculos."""
-        return f"CRG-{self.rng.getrandbits(32):08X}"
+    def pedido_id(self) -> str:
+        """Identificador `PED-` seguido de 8 dígitos hexadecimais maiúsculos."""
+        return f"PED-{self.rng.getrandbits(32):08X}"
 
     def veiculo_id(self) -> str:
         """Identificador de veículo `VEI-NNNN`."""
@@ -79,7 +79,7 @@ class Gerador:
         return f"CD-{cidade.nome.upper().replace(' ', '-')}"
 
     def descricao(self) -> str:
-        """Descrição curta da carga."""
+        """Descrição curta do pedido."""
         return f"{self.rng.choice(PRODUTOS)} - {self.rng.randint(1, 40)} volumes"
 
     def peso_kg(self) -> float:
@@ -87,7 +87,7 @@ class Gerador:
         return round(self.rng.uniform(5, 12000), 1)
 
     def recebedor(self) -> str:
-        """Nome fictício de quem recebeu a carga."""
+        """Nome fictício de quem recebeu a pedido."""
         return f"{self.rng.choice(NOMES)} {self.rng.choice(SOBRENOMES)}"
 
     def transitos(self) -> int:

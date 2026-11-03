@@ -1,4 +1,4 @@
-"""Imprime um evento válido como `<carga_id>|<json>` (usado por `make publicar-evento-teste`)."""
+"""Imprime um evento válido como `<pedido_id>|<json>` (usado por `make publicar-evento-teste`)."""
 
 from __future__ import annotations
 
@@ -7,22 +7,22 @@ import uuid
 from datetime import UTC, datetime
 
 from contratos.evento import (
-    EventoRecebida,
+    EventoCriado,
     Localidade,
-    PayloadRecebida,
+    PayloadCriado,
     serializar_evento,
 )
 
 
-def evento_exemplo(carga_id: str = "CRG-0000E5E1") -> EventoRecebida:
-    """Evento `carga.recebida` com identificadores novos e horário atual."""
-    return EventoRecebida(
+def evento_exemplo(pedido_id: str = "PED-0000E5E1") -> EventoCriado:
+    """Evento `pedido.criado` com identificadores novos e horário atual."""
+    return EventoCriado(
         event_id=uuid.uuid4(),
         occurred_at=datetime.now(UTC),
         source="make-publicar-evento-teste",
         correlation_id=uuid.uuid4(),
-        carga_id=carga_id,
-        payload=PayloadRecebida(
+        pedido_id=pedido_id,
+        payload=PayloadCriado(
             origem=Localidade(cidade="Campinas", uf="SP"),
             destino=Localidade(cidade="Curitiba", uf="PR"),
             peso_kg=120.0,
@@ -35,7 +35,7 @@ def evento_exemplo(carga_id: str = "CRG-0000E5E1") -> EventoRecebida:
 def main() -> int:
     """Escreve a linha chave|valor em stdout."""
     evento = evento_exemplo()
-    sys.stdout.write(f"{evento.carga_id}|{serializar_evento(evento).decode()}\n")
+    sys.stdout.write(f"{evento.pedido_id}|{serializar_evento(evento).decode()}\n")
     return 0
 
 

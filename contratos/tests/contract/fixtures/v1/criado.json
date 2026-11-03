@@ -1,0 +1,22 @@
+{
+  "event_id": "3f0c8a52-6b1e-4c5e-9d7a-2f1b8e4c9a10",
+  "event_version": 1,
+  "occurred_at": "2026-11-02T13:05:12.481Z",
+  "source": "simulador-loja",
+  "correlation_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  "pedido_id": "PED-1A2B3C4D",
+  "event_type": "pedido.criado",
+  "payload": {
+    "origem": {
+      "cidade": "Campinas",
+      "uf": "SP"
+    },
+    "destino": {
+      "cidade": "Belo Horizonte",
+      "uf": "MG"
+    },
+    "peso_kg": 412.5,
+    "descricao": "Eletrônicos - 12 volumes",
+    "centro_distribuicao": "CD-CAMPINAS"
+  }
+}

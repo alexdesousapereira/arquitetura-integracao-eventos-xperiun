@@ -25,8 +25,8 @@ def test_pasta_so_com_validos_retorna_zero(tmp_path: Path, evento_valido: dict[s
 
 
 def test_exemplo_e_valido(capsys: Any) -> None:
-    assert evento_exemplo().carga_id == "CRG-0000E5E1"
+    assert evento_exemplo().pedido_id == "PED-0000E5E1"
     assert main_exemplo() == 0
     chave, valor = capsys.readouterr().out.strip().split("|", 1)
-    assert chave == "CRG-0000E5E1"
-    assert json.loads(valor)["event_type"] == "carga.recebida"
+    assert chave == "PED-0000E5E1"
+    assert json.loads(valor)["event_type"] == "pedido.criado"

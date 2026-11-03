@@ -18,7 +18,7 @@ from controle_ingestao.adapters.connect_client import (
 from controle_ingestao.observabilidade import correlation_id_var
 from controle_ingestao.services.ingestao import IngestaoInexistenteError
 
-TIPO_BASE = "https://transportadora.local/problemas/"
+TIPO_BASE = "https://loja.local/problemas/"
 MEDIA_TYPE = "application/problem+json"
 
 

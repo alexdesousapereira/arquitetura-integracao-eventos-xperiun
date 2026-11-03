@@ -1,4 +1,4 @@
-"""Status derivado de uma carga a partir do tipo do evento mais recente."""
+"""Status derivado de um pedido a partir do tipo do evento mais recente."""
 
 from __future__ import annotations
 
@@ -9,24 +9,28 @@ from types import MappingProxyType
 from contratos.evento import TipoEvento
 
 
-class StatusCarga(StrEnum):
-    """Status atual de uma carga."""
+class StatusPedido(StrEnum):
+    """Status atual de um pedido."""
 
-    RECEBIDA = "RECEBIDA"
-    EM_TRANSPORTE = "EM_TRANSPORTE"
+    CRIADO = "CRIADO"
+    PAGAMENTO_APROVADO = "PAGAMENTO_APROVADO"
+    PAGAMENTO_RECUSADO = "PAGAMENTO_RECUSADO"
+    ENVIADO = "ENVIADO"
     EM_TRANSITO = "EM_TRANSITO"
     SAIU_PARA_ENTREGA = "SAIU_PARA_ENTREGA"
     ENTREGUE = "ENTREGUE"
     FALHA_ENTREGA = "FALHA_ENTREGA"
 
 
-STATUS_POR_TIPO: Mapping[TipoEvento, StatusCarga] = MappingProxyType(
+STATUS_POR_TIPO: Mapping[TipoEvento, StatusPedido] = MappingProxyType(
     {
-        TipoEvento.RECEBIDA: StatusCarga.RECEBIDA,
-        TipoEvento.SAIU_PARA_TRANSPORTE: StatusCarga.EM_TRANSPORTE,
-        TipoEvento.EM_TRANSITO: StatusCarga.EM_TRANSITO,
-        TipoEvento.SAIU_PARA_ENTREGA: StatusCarga.SAIU_PARA_ENTREGA,
-        TipoEvento.ENTREGUE: StatusCarga.ENTREGUE,
-        TipoEvento.ENTREGA_FALHOU: StatusCarga.FALHA_ENTREGA,
+        TipoEvento.PAGAMENTO_APROVADO: StatusPedido.PAGAMENTO_APROVADO,
+        TipoEvento.PAGAMENTO_RECUSADO: StatusPedido.PAGAMENTO_RECUSADO,
+        TipoEvento.CRIADO: StatusPedido.CRIADO,
+        TipoEvento.ENVIADO: StatusPedido.ENVIADO,
+        TipoEvento.EM_TRANSITO: StatusPedido.EM_TRANSITO,
+        TipoEvento.SAIU_PARA_ENTREGA: StatusPedido.SAIU_PARA_ENTREGA,
+        TipoEvento.ENTREGUE: StatusPedido.ENTREGUE,
+        TipoEvento.ENTREGA_FALHOU: StatusPedido.FALHA_ENTREGA,
     }
 )

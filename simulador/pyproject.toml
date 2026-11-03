@@ -1,7 +1,7 @@
 [project]
 name = "simulador"
 version = "0.1.0"
-description = "Simulador de eventos do ciclo de vida de cargas de uma transportadora."
+description = "Simulador de eventos do ciclo de vida de pedidos de uma loja."
 requires-python = ">=3.12"
 dependencies = [
     "contratos",

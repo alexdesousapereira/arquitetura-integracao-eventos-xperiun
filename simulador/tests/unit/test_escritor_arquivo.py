@@ -10,15 +10,15 @@ import pytest
 
 from contratos import parse_evento
 from simulador.adapters.escritor_arquivo import ErroGravacaoEvento, EscritorArquivo
-from simulador.dominio.carga import CargaSimulada
 from simulador.dominio.gerador import Gerador
+from simulador.dominio.pedido import PedidoSimulado
 
-NOME = re.compile(r"^\d{8}T\d{12}Z_CRG-[0-9A-F]{8}_[0-9a-f-]{36}\.json$")
+NOME = re.compile(r"^\d{8}T\d{12}Z_PED-[0-9A-F]{8}_[0-9a-f-]{36}\.json$")
 
 
 def _evento():  # type: ignore[no-untyped-def]
-    carga = CargaSimulada.nova(Gerador(random.Random(1)), prob_falha=0.0)
-    return carga.proximo_evento(datetime(2026, 11, 2, 12, 0, 0, 123456, tzinfo=UTC))
+    pedido = PedidoSimulado.nova(Gerador(random.Random(1)), prob_falha=0.0)
+    return pedido.proximo_evento(datetime(2026, 11, 2, 12, 0, 0, 123456, tzinfo=UTC))
 
 
 def test_grava_arquivo_com_nome_padronizado(tmp_path: Path) -> None:
@@ -26,7 +26,7 @@ def test_grava_arquivo_com_nome_padronizado(tmp_path: Path) -> None:
     caminho = EscritorArquivo(tmp_path).gravar(evento)
     assert NOME.match(caminho.name), caminho.name
     assert caminho.name.startswith("20261102T120000123456Z_")
-    assert str(evento.carga_id) in caminho.name
+    assert str(evento.pedido_id) in caminho.name
     assert str(evento.event_id) in caminho.name
 
 

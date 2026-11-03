@@ -25,12 +25,12 @@ def test_cli_max_eventos_zero_e_invalido(tmp_path: Path) -> None:
 
 
 def test_cli_argumento_invalido_sai_com_dois(tmp_path: Path) -> None:
-    assert main(["--saida", str(tmp_path), "--cargas", "0"]) == 2
+    assert main(["--saida", str(tmp_path), "--pedidos", "0"]) == 2
 
 
 def test_cli_tipo_invalido_sai_com_dois() -> None:
     with pytest.raises(SystemExit) as exc:
-        main(["--cargas", "muitas"])
+        main(["--pedidos", "muitas"])
     assert exc.value.code == 2
 
 

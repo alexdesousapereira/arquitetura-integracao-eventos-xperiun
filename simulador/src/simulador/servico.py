@@ -1,4 +1,4 @@
-"""Loop da simulação: mantém N cargas ativas e grava seus eventos."""
+"""Loop da simulação: mantém N pedidos ativos e grava seus eventos."""
 
 from __future__ import annotations
 
@@ -13,14 +13,14 @@ from typing import Protocol
 
 import structlog
 
-from contratos import EventoCarga
+from contratos import EventoPedido
 from simulador.config import ConfigSimulador
-from simulador.dominio.carga import CargaSimulada
 from simulador.dominio.gerador import Gerador
-from simulador.observabilidade import CARGAS_ATIVAS, EVENTOS_GERADOS
+from simulador.dominio.pedido import PedidoSimulado
+from simulador.observabilidade import EVENTOS_GERADOS, PEDIDOS_ATIVOS
 
 INTERVALO_RESUMO_S = 10.0
-FRACAO_POR_CICLO = 10  # a cada ciclo avançam ~1/10 das cargas (mínimo 1)
+FRACAO_POR_CICLO = 10  # a cada ciclo avançam ~1/10 dos pedidos (mínimo 1)
 
 log = structlog.get_logger()
 
@@ -28,7 +28,7 @@ log = structlog.get_logger()
 class Escritor(Protocol):
     """Destino dos eventos gerados."""
 
-    def gravar(self, evento: EventoCarga) -> Path:
+    def gravar(self, evento: EventoPedido) -> Path:
         """Persiste o evento e retorna onde ele foi gravado."""
         ...
 
@@ -38,7 +38,7 @@ class Resumo:
     """Totais ao final da simulação."""
 
     eventos_gerados: int
-    cargas_concluidas: int
+    pedidos_concluidos: int
 
 
 def _agora_utc() -> datetime:
@@ -66,17 +66,17 @@ class Simulacao:
         self._monotonico = monotonico
         self.parar = parar or threading.Event()
         self._dormir = dormir or self.parar.wait
-        self._ativas: list[CargaSimulada] = []
+        self._ativos: list[PedidoSimulado] = []
         self._eventos = 0
-        self._concluidas = 0
+        self._concluidos = 0
 
     @property
-    def cargas_ativas(self) -> int:
-        """Quantidade de cargas em andamento."""
-        return len(self._ativas)
+    def pedidos_ativos(self) -> int:
+        """Quantidade de pedidos em andamento."""
+        return len(self._ativos)
 
-    def _nova_carga(self) -> CargaSimulada:
-        return CargaSimulada.nova(self.gerador, self.config.prob_falha)
+    def _novo_pedido(self) -> PedidoSimulado:
+        return PedidoSimulado.nova(self.gerador, self.config.prob_falha)
 
     def _limite_atingido(self, inicio: float) -> bool:
         cfg = self.config
@@ -87,12 +87,12 @@ class Simulacao:
         return bool(cfg.duracao_s and self._monotonico() - inicio >= cfg.duracao_s)
 
     def _ciclo(self, inicio: float) -> None:
-        quantidade = max(1, len(self._ativas) // FRACAO_POR_CICLO)
-        for indice in self.gerador.rng.sample(range(len(self._ativas)), quantidade):
+        quantidade = max(1, len(self._ativos) // FRACAO_POR_CICLO)
+        for indice in self.gerador.rng.sample(range(len(self._ativos)), quantidade):
             if self._limite_atingido(inicio):
                 return
-            carga = self._ativas[indice]
-            evento = carga.proximo_evento(self._agora())
+            pedido = self._ativos[indice]
+            evento = pedido.proximo_evento(self._agora())
             if evento is not None:
                 self.escritor.gravar(evento)
                 self._eventos += 1
@@ -100,18 +100,18 @@ class Simulacao:
                 log.debug(
                     "evento_gerado",
                     event_id=str(evento.event_id),
-                    carga_id=evento.carga_id,
+                    pedido_id=evento.pedido_id,
                     correlation_id=str(evento.correlation_id),
                     event_type=evento.event_type.value,
                 )
-            if carga.concluida:
-                self._concluidas += 1
-                self._ativas[indice] = self._nova_carga()
+            if pedido.concluido:
+                self._concluidos += 1
+                self._ativos[indice] = self._novo_pedido()
 
     def executar(self) -> Resumo:
         """Roda a simulação e retorna os totais."""
-        self._ativas = [self._nova_carga() for _ in range(self.config.cargas)]
-        CARGAS_ATIVAS.set(len(self._ativas))
+        self._ativos = [self._novo_pedido() for _ in range(self.config.pedidos)]
+        PEDIDOS_ATIVOS.set(len(self._ativos))
         inicio = self._monotonico()
         ultimo_resumo = inicio
         log.info("simulacao_iniciada", **self.config.model_dump(mode="json"))
@@ -124,12 +124,12 @@ class Simulacao:
                 break
             self._dormir(self.config.intervalo_ms / 1000)
         self._logar_resumo("simulacao_encerrada")
-        return Resumo(self._eventos, self._concluidas)
+        return Resumo(self._eventos, self._concluidos)
 
     def _logar_resumo(self, mensagem: str) -> None:
         log.info(
             mensagem,
             eventos_gerados=self._eventos,
-            cargas_ativas=len(self._ativas),
-            cargas_concluidas=self._concluidas,
+            pedidos_ativos=len(self._ativos),
+            pedidos_concluidos=self._concluidos,
         )

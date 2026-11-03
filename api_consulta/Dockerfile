@@ -9,6 +9,7 @@ COPY contratos/pyproject.toml contratos/pyproject.toml
 COPY simulador/pyproject.toml simulador/pyproject.toml
 COPY controle_ingestao/pyproject.toml controle_ingestao/pyproject.toml
 COPY api_consulta/pyproject.toml api_consulta/pyproject.toml
+COPY notificador/pyproject.toml notificador/pyproject.toml
 COPY contratos/src contratos/src
 COPY api_consulta/src api_consulta/src
 RUN uv sync --frozen --no-dev --no-editable --package api-consulta

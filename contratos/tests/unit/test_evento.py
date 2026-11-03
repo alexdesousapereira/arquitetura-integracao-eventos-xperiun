@@ -10,43 +10,43 @@ from pydantic import ValidationError
 
 from contratos import (
     STATUS_POR_TIPO,
-    EventoCargaAdapter,
+    EventoCriado,
     EventoEntregue,
-    EventoRecebida,
-    StatusCarga,
+    EventoPedidoAdapter,
+    StatusPedido,
     TipoEvento,
     parse_evento,
 )
 
 
 def test_aceita_evento_valido(evento_valido: dict[str, Any]) -> None:
-    evento = EventoCargaAdapter.validate_python(evento_valido)
+    evento = EventoPedidoAdapter.validate_python(evento_valido)
     assert evento.event_type == evento_valido["event_type"]
-    assert evento.carga_id == "CRG-1A2B3C4D"
+    assert evento.pedido_id == "PED-1A2B3C4D"
     assert isinstance(evento.event_id, UUID)
 
 
 def test_rejeita_evento_invalido(evento_invalido: dict[str, Any]) -> None:
     with pytest.raises(ValidationError):
-        EventoCargaAdapter.validate_python(evento_invalido)
+        EventoPedidoAdapter.validate_python(evento_invalido)
 
 
 def test_occurred_at_normalizado_para_utc_com_z(evento_valido: dict[str, Any]) -> None:
-    evento = EventoCargaAdapter.validate_python(evento_valido)
+    evento = EventoPedidoAdapter.validate_python(evento_valido)
     assert evento.occurred_at.tzinfo is not None
     assert evento.occurred_at.utcoffset().total_seconds() == 0  # type: ignore[union-attr]
-    dump = EventoCargaAdapter.dump_python(evento, mode="json")
+    dump = EventoPedidoAdapter.dump_python(evento, mode="json")
     assert dump["occurred_at"].endswith("Z")
 
 
 def test_roundtrip_json(evento_valido: dict[str, Any]) -> None:
     evento = parse_evento(json.dumps(evento_valido))
-    recarregado = parse_evento(EventoCargaAdapter.dump_json(evento))
+    recarregado = parse_evento(EventoPedidoAdapter.dump_json(evento))
     assert recarregado == evento
 
 
 def test_parse_evento_aceita_bytes(evento_valido: dict[str, Any]) -> None:
-    assert parse_evento(json.dumps(evento_valido).encode()).carga_id == "CRG-1A2B3C4D"
+    assert parse_evento(json.dumps(evento_valido).encode()).pedido_id == "PED-1A2B3C4D"
 
 
 def test_parse_evento_rejeita_json_malformado() -> None:
@@ -55,9 +55,9 @@ def test_parse_evento_rejeita_json_malformado() -> None:
 
 
 def test_eventos_sao_imutaveis(evento_valido: dict[str, Any]) -> None:
-    evento = EventoCargaAdapter.validate_python(evento_valido)
+    evento = EventoPedidoAdapter.validate_python(evento_valido)
     with pytest.raises(ValidationError):
-        evento.carga_id = "CRG-FFFFFFFF"  # type: ignore[misc]
+        evento.pedido_id = "PED-FFFFFFFF"  # type: ignore[misc]
 
 
 def test_construcao_direta_tipada() -> None:
@@ -66,7 +66,7 @@ def test_construcao_direta_tipada() -> None:
         occurred_at=datetime(2026, 11, 2, 13, 0, tzinfo=UTC),
         source="teste",
         correlation_id=UUID("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"),
-        carga_id="CRG-00000001",
+        pedido_id="PED-00000001",
         payload={"tentativa": 1, "recebedor": "Ana"},  # type: ignore[arg-type]
     )
     assert evento.event_type == TipoEvento.ENTREGUE
@@ -75,9 +75,9 @@ def test_construcao_direta_tipada() -> None:
 
 def test_mapeamento_status_cobre_todos_os_tipos() -> None:
     assert set(STATUS_POR_TIPO) == set(TipoEvento)
-    assert STATUS_POR_TIPO[TipoEvento.RECEBIDA] is StatusCarga.RECEBIDA
-    assert STATUS_POR_TIPO[TipoEvento.ENTREGA_FALHOU] is StatusCarga.FALHA_ENTREGA
+    assert STATUS_POR_TIPO[TipoEvento.CRIADO] is StatusPedido.CRIADO
+    assert STATUS_POR_TIPO[TipoEvento.ENTREGA_FALHOU] is StatusPedido.FALHA_ENTREGA
 
 
-def test_tipo_do_modelo_recebida() -> None:
-    assert EventoRecebida.model_fields["event_type"].default == TipoEvento.RECEBIDA
+def test_tipo_do_modelo_criado() -> None:
+    assert EventoCriado.model_fields["event_type"].default == TipoEvento.CRIADO

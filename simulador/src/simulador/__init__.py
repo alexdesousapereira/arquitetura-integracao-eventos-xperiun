@@ -1,1 +1,1 @@
-"""Simulador de eventos de cargas."""
+"""Simulador de eventos de pedidos."""

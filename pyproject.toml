@@ -1,13 +1,14 @@
 [project]
-name = "pipeline-eventos-transportadora"
+name = "pipeline-eventos-loja"
 version = "0.1.0"
-description = "Pipeline orientado a eventos de uma transportadora (simulação local)."
+description = "Pipeline orientado a eventos de uma loja (simulação local)."
 requires-python = ">=3.12"
 dependencies = [
     "contratos",
     "simulador",
     "controle-ingestao",
     "api-consulta",
+    "notificador",
 ]
 
 [dependency-groups]
@@ -33,13 +34,14 @@ dev = [
 package = false
 
 [tool.uv.workspace]
-members = ["contratos", "simulador", "controle_ingestao", "api_consulta"]
+members = ["contratos", "simulador", "controle_ingestao", "api_consulta", "notificador"]
 
 [tool.uv.sources]
 contratos = { workspace = true }
 simulador = { workspace = true }
 controle-ingestao = { workspace = true }
 api-consulta = { workspace = true }
+notificador = { workspace = true }
 
 [tool.ruff]
 line-length = 100
@@ -54,7 +56,9 @@ ignore = ["D100", "D104", "D107"]
 convention = "google"
 
 [tool.ruff.lint.isort]
-known-first-party = ["contratos", "simulador", "controle_ingestao", "api_consulta", "tests_e2e"]
+known-first-party = [
+    "contratos", "simulador", "controle_ingestao", "api_consulta", "notificador", "tests_e2e",
+]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["D", "S101", "S108", "S311", "T20"]
@@ -64,7 +68,9 @@ known-first-party = ["contratos", "simulador", "controle_ingestao", "api_consult
 strict = true
 python_version = "3.12"
 plugins = ["pydantic.mypy"]
-mypy_path = ["contratos/src", "simulador/src", "controle_ingestao/src", "api_consulta/src"]
+mypy_path = [
+    "contratos/src", "simulador/src", "controle_ingestao/src", "api_consulta/src", "notificador/src",
+]
 explicit_package_bases = true
 
 [[tool.mypy.overrides]]
@@ -79,17 +85,21 @@ markers = [
     "e2e: testes ponta a ponta contra o ambiente `make up`",
 ]
 addopts = "-m 'not integration and not e2e' --import-mode=importlib"
+# As pastas dos serviços têm o mesmo nome dos pacotes (ex.: notificador/ e notificador/src/notificador):
+# sem esta opção, o pytest pode registrar a pasta como pacote e esconder o pacote instalado.
+consider_namespace_packages = true
 pythonpath = ["."]
 testpaths = [
     "contratos/tests",
     "simulador/tests",
     "controle_ingestao/tests",
     "api_consulta/tests",
+    "notificador/tests",
     "tests_e2e",
 ]
 
 [tool.coverage.run]
-source = ["contratos", "simulador", "controle_ingestao", "api_consulta"]
+source = ["contratos", "simulador", "controle_ingestao", "api_consulta", "notificador"]
 omit = ["*/__main__.py", "*/main.py"]
 
 [tool.coverage.report]

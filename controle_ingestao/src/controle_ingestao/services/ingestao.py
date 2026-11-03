@@ -59,7 +59,7 @@ class ContagemArquivos(BaseModel):
 class StatusIngestao(BaseModel):
     """Visão consolidada da ingestão."""
 
-    nome: str = Field(examples=["arquivos-eventos-transportadora"])
+    nome: str = Field(examples=["arquivos-eventos-loja"])
     estado: EstadoIngestao
     tarefas: list[Tarefa]
     arquivos: ContagemArquivos

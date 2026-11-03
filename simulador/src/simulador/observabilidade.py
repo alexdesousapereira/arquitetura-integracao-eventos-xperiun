@@ -13,7 +13,7 @@ SERVICE = "simulador"
 EVENTOS_GERADOS = Counter(
     "simulador_eventos_gerados_total", "Eventos gravados pelo simulador", ["event_type"]
 )
-CARGAS_ATIVAS = Gauge("simulador_cargas_ativas", "Cargas em andamento na simulação")
+PEDIDOS_ATIVOS = Gauge("simulador_pedidos_ativos", "Pedidos em andamento na simulação")
 
 
 def configurar_logs(nivel: str = "INFO") -> None:

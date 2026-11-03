@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cria (ou ajusta) os tópicos da transportadora de forma idempotente.
+# Cria (ou ajusta) os tópicos da loja de forma idempotente.
 #
 # Por que `segment.ms`: o Kafka só apaga segmentos de log FECHADOS. Com o padrão (7 dias) o
 # segmento ativo nunca fecha e a retenção de 15 min não seria observada. Segmentos de 1 min +

@@ -24,6 +24,6 @@ def test_mensagens_tem_chave_e_headers(
     gravador.gerar(5)
     aguardar(lambda: not arquivos("eventos"), timeout=30)
     for mensagem in consumir(20):
-        assert mensagem["key"] == mensagem["value"]["carga_id"]
+        assert mensagem["key"] == mensagem["value"]["pedido_id"]
         assert mensagem["headers"]["correlation_id"] == mensagem["value"]["correlation_id"]
         assert mensagem["headers"]["event_type"] == mensagem["value"]["event_type"]

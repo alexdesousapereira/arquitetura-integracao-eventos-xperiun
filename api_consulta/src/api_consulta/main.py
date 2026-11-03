@@ -1,4 +1,4 @@
-"""Aplicação FastAPI da API de consulta de cargas.
+"""Aplicação FastAPI da API de consulta de pedidos.
 
 Execução: `uvicorn --factory api_consulta.main:criar_app`.
 """
@@ -17,7 +17,7 @@ from fastapi import FastAPI
 
 from api_consulta.adapters.consumidor_kafka import ConsumidorEventos
 from api_consulta.adapters.produtor_dlq import ProdutorDLQ
-from api_consulta.api import cargas, saude
+from api_consulta.api import pedidos, saude
 from api_consulta.api.problemas import registrar_handlers
 from api_consulta.config import ConfigConsulta
 from api_consulta.observabilidade import (
@@ -72,17 +72,17 @@ def criar_app(config: ConfigConsulta | None = None) -> FastAPI:
             await consumidor.parar()
 
     app = FastAPI(
-        title="API de Consulta de Cargas",
+        title="API de Consulta de Pedidos",
         version="1.0.0",
         description=(
-            "Consome o tópico `transportadora.carga.eventos.v1` e expõe o status atual, o "
-            "histórico de eventos e indicadores agregados das cargas. Dados mantidos em memória, "
+            "Consome o tópico `loja.pedido.eventos.v1` e expõe o status atual, o "
+            "histórico de eventos e indicadores agregados dos pedidos. Dados mantidos em memória, "
             "limitados à mesma janela de retenção do tópico (15 min, pelo `occurred_at`)."
         ),
         lifespan=lifespan,
     )
     app.add_middleware(MiddlewareObservabilidade)
     registrar_handlers(app)
-    app.include_router(cargas.router)
+    app.include_router(pedidos.router)
     app.include_router(saude.router)
     return app

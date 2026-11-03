@@ -69,7 +69,7 @@ services:
       CONNECT_BOOTSTRAP_SERVERS: kafka:29092
       CONNECT_REST_PORT: 8083
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
-      CONNECT_GROUP_ID: connect-transportadora
+      CONNECT_GROUP_ID: connect-loja
       CONNECT_CONFIG_STORAGE_TOPIC: _connect-configs
       CONNECT_OFFSET_STORAGE_TOPIC: _connect-offsets
       CONNECT_STATUS_STORAGE_TOPIC: _connect-status
@@ -163,3 +163,21 @@ services:
       - "${SIMULADOR_METRICS_PORT:-9100}:9100"
     volumes:
       - ./dados/eventos:/app/dados/eventos
+
+  # Bot de notificação: sobe com `make notificador`. Sem TELEGRAM_BOT_TOKEN/CHAT_ID no .env,
+  # roda em modo demonstração (só log). Sem porta no host, para permitir `--scale notificador=N`.
+  notificador:
+    image: pipeline-eventos/notificador:local
+    build:
+      context: .
+      dockerfile: notificador/Dockerfile
+      args:
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
+    profiles: [notificacao]
+    <<: *env
+    networks: [pipeline]
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    restart: unless-stopped

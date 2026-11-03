@@ -15,9 +15,9 @@ from api_consulta.adapters.produtor_dlq import ProdutorDLQ
 from api_consulta.config import ConfigConsulta
 from api_consulta.services.processador import Processador
 from api_consulta.services.projecao import Projecao
-from contratos import EventoCarga, EventoCargaAdapter
-from simulador.dominio.carga import CargaSimulada
+from contratos import EventoPedido, EventoPedidoAdapter
 from simulador.dominio.gerador import Gerador
+from simulador.dominio.pedido import PedidoSimulado
 
 pytestmark = pytest.mark.integration
 
@@ -73,27 +73,27 @@ class Execucao:
         await self.consumidor.parar()
 
 
-def _jornada(seed: int, inicio: datetime) -> list[EventoCarga]:
-    carga = CargaSimulada.nova(Gerador(random.Random(seed)), prob_falha=0.0)
+def _jornada(seed: int, inicio: datetime) -> list[EventoPedido]:
+    pedido = PedidoSimulado.nova(Gerador(random.Random(seed)), prob_falha=0.0)
     eventos = []
-    while (evento := carga.proximo_evento(inicio)) is not None:
+    while (evento := pedido.proximo_evento(inicio)) is not None:
         eventos.append(evento)
         inicio += timedelta(seconds=1)
     return eventos
 
 
-def _eventos(quantidade_cargas: int, inicio: datetime) -> list[EventoCarga]:
-    return [e for seed in range(quantidade_cargas) for e in _jornada(seed, inicio)]
+def _eventos(quantidade_pedidos: int, inicio: datetime) -> list[EventoPedido]:
+    return [e for seed in range(quantidade_pedidos) for e in _jornada(seed, inicio)]
 
 
 async def test_consumo_dedup_dlq_e_reconstrucao(kafka: str, topicos: tuple[str, str]) -> None:
-    eventos = _eventos(8, datetime.now(UTC))[:45]
+    eventos = _eventos(15, datetime.now(UTC))  # 3 eventos por pedido: criado, pagamento, envio
     assert len(eventos) == 45
-    validas = [(e.carga_id.encode(), EventoCargaAdapter.dump_json(e)) for e in eventos]
+    validas = [(e.pedido_id.encode(), EventoPedidoAdapter.dump_json(e)) for e in eventos]
     duplicadas = validas[:5]
     invalidas = [
-        (b"CRG-1", b"{ quebrado"),
-        (b"CRG-2", json.dumps({"event_type": "carga.recebida"}).encode()),
+        (b"PED-1", b"{ quebrado"),
+        (b"PED-2", json.dumps({"event_type": "pedido.criado"}).encode()),
     ]
     await _publicar(kafka, topicos[0], validas + duplicadas + invalidas)
 
@@ -105,7 +105,7 @@ async def test_consumo_dedup_dlq_e_reconstrucao(kafka: str, topicos: tuple[str, 
         status = await execucao.consumidor.status_consumo()
         assert status.catch_up_concluido
         assert status.lag_total == 0
-        cargas_antes = execucao.projecao.listar(None, 1, 500).model_dump()["itens"]
+        pedidos_antes = execucao.projecao.listar(None, 1, 500).model_dump()["itens"]
 
     consumer = AIOKafkaConsumer(
         topicos[1], bootstrap_servers=kafka, auto_offset_reset="earliest", group_id=None
@@ -126,7 +126,7 @@ async def test_consumo_dedup_dlq_e_reconstrucao(kafka: str, topicos: tuple[str, 
 
     # reinício: nova instância reconstrói exatamente a mesma projeção
     async with Execucao(kafka, topicos) as segunda:
-        assert segunda.projecao.listar(None, 1, 500).model_dump()["itens"] == cargas_antes
+        assert segunda.projecao.listar(None, 1, 500).model_dump()["itens"] == pedidos_antes
 
 
 async def test_retencao_da_projecao(kafka: str, topicos: tuple[str, str]) -> None:
@@ -135,12 +135,12 @@ async def test_retencao_da_projecao(kafka: str, topicos: tuple[str, str]) -> Non
     await _publicar(
         kafka,
         topicos[0],
-        [(e.carga_id.encode(), EventoCargaAdapter.dump_json(e)) for e in antigos + recentes],
+        [(e.pedido_id.encode(), EventoPedidoAdapter.dump_json(e)) for e in antigos + recentes],
     )
     async with Execucao(kafka, topicos, retencao_s=5) as execucao:
-        cargas = {c.carga_id for c in execucao.projecao.listar(None, 1, 500).itens}
-        assert cargas == {e.carga_id for e in recentes}
+        pedidos = {c.pedido_id for c in execucao.projecao.listar(None, 1, 500).itens}
+        assert pedidos == {e.pedido_id for e in recentes}
         mais_recente = max(e.occurred_at for e in recentes)
         await asyncio.sleep(max(0, (mais_recente - datetime.now(UTC)).total_seconds()) + 5.5)
         assert execucao.projecao.expirar() == len(recentes)
-        assert execucao.projecao.resumo().total_cargas == 0
+        assert execucao.projecao.resumo().total_pedidos == 0

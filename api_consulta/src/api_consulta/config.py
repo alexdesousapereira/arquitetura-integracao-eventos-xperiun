@@ -14,8 +14,8 @@ class ConfigConsulta(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore")
 
     kafka_bootstrap: str = "kafka:29092"
-    topico_eventos: str = "transportadora.carga.eventos.v1"
-    topico_dlq: str = "transportadora.carga.eventos-dlq.v1"
+    topico_eventos: str = "loja.pedido.eventos.v1"
+    topico_dlq: str = "loja.pedido.eventos-dlq.v1"
     catch_up_timeout_s: Annotated[float, Field(gt=0)] = 120
     retencao_projecao_s: Annotated[float, Field(gt=0)] = 900
     intervalo_expiracao_s: Annotated[float, Field(gt=0)] = 30

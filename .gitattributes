@@ -1,0 +1,5 @@
+# O projeto roda em containers Linux/WSL: força LF no checkout, mesmo com core.autocrlf=true
+# no Git for Windows (CRLF quebra scripts bash, ex.: "set: pipefail\r: invalid option name").
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf

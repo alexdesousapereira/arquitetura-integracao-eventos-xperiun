@@ -20,14 +20,14 @@ async def test_preserva_chave_valor_e_adiciona_headers() -> None:
         topic="eventos",
         partition=1,
         offset=7,
-        key=b"CRG-1",
+        key=b"PED-1",
         value=b"{ quebrado",
         headers=[("correlation_id", b"corr-9")],
     )
     await ProdutorDLQ(producer, "dlq").enviar(msg, "JSON_INVALIDO", "x" * 2000)  # type: ignore[arg-type]
     envio = producer.envios[0]
     assert envio["topic"] == "dlq"
-    assert envio["key"] == b"CRG-1"
+    assert envio["key"] == b"PED-1"
     assert envio["value"] == b"{ quebrado"
     headers = dict(envio["headers"])
     assert headers["erro_tipo"] == b"JSON_INVALIDO"

@@ -11,7 +11,8 @@ members = [
     "api-consulta",
     "contratos",
     "controle-ingestao",
-    "pipeline-eventos-transportadora",
+    "notificador",
+    "pipeline-eventos-loja",
     "simulador",
 ]
 
@@ -1054,6 +1055,29 @@ wheels = [
 ]
 
 [[package]]
+name = "notificador"
+version = "0.1.0"
+source = { editable = "notificador" }
+dependencies = [
+    { name = "aiokafka" },
+    { name = "contratos" },
+    { name = "httpx" },
+    { name = "prometheus-client" },
+    { name = "pydantic-settings" },
+    { name = "structlog" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiokafka", specifier = ">=0.12" },
+    { name = "contratos", editable = "contratos" },
+    { name = "httpx", specifier = ">=0.28" },
+    { name = "prometheus-client", specifier = ">=0.21" },
+    { name = "pydantic-settings", specifier = ">=2.6" },
+    { name = "structlog", specifier = ">=24.4" },
+]
+
+[[package]]
 name = "opentelemetry-api"
 version = "1.45.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1148,13 +1172,14 @@ wheels = [
 ]
 
 [[package]]
-name = "pipeline-eventos-transportadora"
+name = "pipeline-eventos-loja"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "api-consulta" },
     { name = "contratos" },
     { name = "controle-ingestao" },
+    { name = "notificador" },
     { name = "simulador" },
 ]
 
@@ -1182,6 +1207,7 @@ requires-dist = [
     { name = "api-consulta", editable = "api_consulta" },
     { name = "contratos", editable = "contratos" },
     { name = "controle-ingestao", editable = "controle_ingestao" },
+    { name = "notificador", editable = "notificador" },
     { name = "simulador", editable = "simulador" },
 ]
 

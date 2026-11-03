@@ -15,7 +15,7 @@ from simulador.servico import Simulacao
 
 
 def test_eventos_gerados_validam_contra_json_schema(tmp_path: Path) -> None:
-    config = ConfigSimulador(cargas=30, max_eventos=600, intervalo_ms=10, seed=123, prob_falha=0.4)
+    config = ConfigSimulador(pedidos=30, max_eventos=600, intervalo_ms=10, seed=123, prob_falha=0.4)
     Simulacao(
         config,
         EscritorArquivo(tmp_path),
@@ -32,4 +32,12 @@ def test_eventos_gerados_validam_contra_json_schema(tmp_path: Path) -> None:
         dados = json.loads(arquivo.read_text(encoding="utf-8"))
         validador.validate(dados)
         tipos.add(dados["event_type"])
-    assert tipos == {t.value for t in TipoEvento}
+    assert tipos == {
+        t.value
+        for t in (
+            TipoEvento.CRIADO,
+            TipoEvento.PAGAMENTO_APROVADO,
+            TipoEvento.PAGAMENTO_RECUSADO,
+            TipoEvento.ENVIADO,
+        )
+    }

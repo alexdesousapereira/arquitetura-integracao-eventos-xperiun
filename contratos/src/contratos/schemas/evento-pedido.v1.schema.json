@@ -1,0 +1,810 @@
+{
+  "$defs": {
+    "EventoEmTransito": {
+      "additionalProperties": false,
+      "description": "Evento `pedido.em_transito`.",
+      "properties": {
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Event Version",
+          "type": "integer"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string",
+          "pattern": "Z$"
+        },
+        "source": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "correlation_id": {
+          "format": "uuid",
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "pedido_id": {
+          "pattern": "^PED-[0-9A-F]{8}$",
+          "title": "Pedido Id",
+          "type": "string"
+        },
+        "event_type": {
+          "const": "pedido.em_transito",
+          "default": "pedido.em_transito",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/PayloadEmTransito"
+        }
+      },
+      "required": [
+        "event_id",
+        "occurred_at",
+        "source",
+        "correlation_id",
+        "pedido_id",
+        "payload"
+      ],
+      "title": "EventoEmTransito",
+      "type": "object"
+    },
+    "EventoEntregaFalhou": {
+      "additionalProperties": false,
+      "description": "Evento `pedido.entrega_falhou`.",
+      "properties": {
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Event Version",
+          "type": "integer"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string",
+          "pattern": "Z$"
+        },
+        "source": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "correlation_id": {
+          "format": "uuid",
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "pedido_id": {
+          "pattern": "^PED-[0-9A-F]{8}$",
+          "title": "Pedido Id",
+          "type": "string"
+        },
+        "event_type": {
+          "const": "pedido.entrega_falhou",
+          "default": "pedido.entrega_falhou",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/PayloadEntregaFalhou"
+        }
+      },
+      "required": [
+        "event_id",
+        "occurred_at",
+        "source",
+        "correlation_id",
+        "pedido_id",
+        "payload"
+      ],
+      "title": "EventoEntregaFalhou",
+      "type": "object"
+    },
+    "EventoEntregue": {
+      "additionalProperties": false,
+      "description": "Evento `pedido.entregue`.",
+      "properties": {
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Event Version",
+          "type": "integer"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string",
+          "pattern": "Z$"
+        },
+        "source": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "correlation_id": {
+          "format": "uuid",
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "pedido_id": {
+          "pattern": "^PED-[0-9A-F]{8}$",
+          "title": "Pedido Id",
+          "type": "string"
+        },
+        "event_type": {
+          "const": "pedido.entregue",
+          "default": "pedido.entregue",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/PayloadEntregue"
+        }
+      },
+      "required": [
+        "event_id",
+        "occurred_at",
+        "source",
+        "correlation_id",
+        "pedido_id",
+        "payload"
+      ],
+      "title": "EventoEntregue",
+      "type": "object"
+    },
+    "EventoPagamentoAprovado": {
+      "additionalProperties": false,
+      "description": "Pagamento aprovado para o pedido.",
+      "properties": {
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Event Version",
+          "type": "integer"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string",
+          "pattern": "Z$"
+        },
+        "source": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "correlation_id": {
+          "format": "uuid",
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "pedido_id": {
+          "pattern": "^PED-[0-9A-F]{8}$",
+          "title": "Pedido Id",
+          "type": "string"
+        },
+        "event_type": {
+          "const": "pedido.pagamento_aprovado",
+          "default": "pedido.pagamento_aprovado",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/PayloadPagamentoAprovado"
+        }
+      },
+      "required": [
+        "event_id",
+        "occurred_at",
+        "source",
+        "correlation_id",
+        "pedido_id",
+        "payload"
+      ],
+      "title": "EventoPagamentoAprovado",
+      "type": "object"
+    },
+    "EventoPagamentoRecusado": {
+      "additionalProperties": false,
+      "description": "Pagamento recusado; encerra o fluxo simulado.",
+      "properties": {
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Event Version",
+          "type": "integer"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string",
+          "pattern": "Z$"
+        },
+        "source": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "correlation_id": {
+          "format": "uuid",
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "pedido_id": {
+          "pattern": "^PED-[0-9A-F]{8}$",
+          "title": "Pedido Id",
+          "type": "string"
+        },
+        "event_type": {
+          "const": "pedido.pagamento_recusado",
+          "default": "pedido.pagamento_recusado",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/PayloadPagamentoRecusado"
+        }
+      },
+      "required": [
+        "event_id",
+        "occurred_at",
+        "source",
+        "correlation_id",
+        "pedido_id",
+        "payload"
+      ],
+      "title": "EventoPagamentoRecusado",
+      "type": "object"
+    },
+    "EventoCriado": {
+      "additionalProperties": false,
+      "description": "Evento `pedido.criado`.",
+      "properties": {
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Event Version",
+          "type": "integer"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string",
+          "pattern": "Z$"
+        },
+        "source": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "correlation_id": {
+          "format": "uuid",
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "pedido_id": {
+          "pattern": "^PED-[0-9A-F]{8}$",
+          "title": "Pedido Id",
+          "type": "string"
+        },
+        "event_type": {
+          "const": "pedido.criado",
+          "default": "pedido.criado",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/PayloadCriado"
+        }
+      },
+      "required": [
+        "event_id",
+        "occurred_at",
+        "source",
+        "correlation_id",
+        "pedido_id",
+        "payload"
+      ],
+      "title": "EventoCriado",
+      "type": "object"
+    },
+    "EventoSaiuParaEntrega": {
+      "additionalProperties": false,
+      "description": "Evento `pedido.saiu_para_entrega`.",
+      "properties": {
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Event Version",
+          "type": "integer"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string",
+          "pattern": "Z$"
+        },
+        "source": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "correlation_id": {
+          "format": "uuid",
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "pedido_id": {
+          "pattern": "^PED-[0-9A-F]{8}$",
+          "title": "Pedido Id",
+          "type": "string"
+        },
+        "event_type": {
+          "const": "pedido.saiu_para_entrega",
+          "default": "pedido.saiu_para_entrega",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/PayloadSaiuParaEntrega"
+        }
+      },
+      "required": [
+        "event_id",
+        "occurred_at",
+        "source",
+        "correlation_id",
+        "pedido_id",
+        "payload"
+      ],
+      "title": "EventoSaiuParaEntrega",
+      "type": "object"
+    },
+    "EventoEnviado": {
+      "additionalProperties": false,
+      "description": "Evento `pedido.enviado`.",
+      "properties": {
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Event Version",
+          "type": "integer"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string",
+          "pattern": "Z$"
+        },
+        "source": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "correlation_id": {
+          "format": "uuid",
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "pedido_id": {
+          "pattern": "^PED-[0-9A-F]{8}$",
+          "title": "Pedido Id",
+          "type": "string"
+        },
+        "event_type": {
+          "const": "pedido.enviado",
+          "default": "pedido.enviado",
+          "title": "Event Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/PayloadEnviado"
+        }
+      },
+      "required": [
+        "event_id",
+        "occurred_at",
+        "source",
+        "correlation_id",
+        "pedido_id",
+        "payload"
+      ],
+      "title": "EventoEnviado",
+      "type": "object"
+    },
+    "Localidade": {
+      "additionalProperties": false,
+      "description": "Cidade e UF.",
+      "properties": {
+        "cidade": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Cidade",
+          "type": "string"
+        },
+        "uf": {
+          "pattern": "^[A-Z]{2}$",
+          "title": "Uf",
+          "type": "string"
+        }
+      },
+      "required": [
+        "cidade",
+        "uf"
+      ],
+      "title": "Localidade",
+      "type": "object"
+    },
+    "Localizacao": {
+      "additionalProperties": false,
+      "description": "Posição geográfica durante o trajeto.",
+      "properties": {
+        "latitude": {
+          "maximum": 90,
+          "minimum": -90,
+          "title": "Latitude",
+          "type": "number"
+        },
+        "longitude": {
+          "maximum": 180,
+          "minimum": -180,
+          "title": "Longitude",
+          "type": "number"
+        },
+        "cidade": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Cidade",
+          "type": "string"
+        },
+        "uf": {
+          "pattern": "^[A-Z]{2}$",
+          "title": "Uf",
+          "type": "string"
+        }
+      },
+      "required": [
+        "latitude",
+        "longitude",
+        "cidade",
+        "uf"
+      ],
+      "title": "Localizacao",
+      "type": "object"
+    },
+    "MotivoFalha": {
+      "description": "Motivos possíveis para uma tentativa de entrega sem sucesso.",
+      "enum": [
+        "DESTINATARIO_AUSENTE",
+        "ENDERECO_NAO_ENCONTRADO",
+        "RECUSADA"
+      ],
+      "title": "MotivoFalha",
+      "type": "string"
+    },
+    "PayloadEmTransito": {
+      "additionalProperties": false,
+      "description": "Atualização de posição durante o trajeto.",
+      "properties": {
+        "veiculo_id": {
+          "pattern": "^VEI-[0-9]{4}$",
+          "title": "Veiculo Id",
+          "type": "string"
+        },
+        "localizacao": {
+          "$ref": "#/$defs/Localizacao"
+        }
+      },
+      "required": [
+        "veiculo_id",
+        "localizacao"
+      ],
+      "title": "PayloadEmTransito",
+      "type": "object"
+    },
+    "PayloadEntregaFalhou": {
+      "additionalProperties": false,
+      "description": "Tentativa de entrega sem sucesso.",
+      "properties": {
+        "tentativa": {
+          "maximum": 3,
+          "minimum": 1,
+          "title": "Tentativa",
+          "type": "integer"
+        },
+        "motivo": {
+          "$ref": "#/$defs/MotivoFalha"
+        }
+      },
+      "required": [
+        "tentativa",
+        "motivo"
+      ],
+      "title": "PayloadEntregaFalhou",
+      "type": "object"
+    },
+    "PayloadEntregue": {
+      "additionalProperties": false,
+      "description": "Entrega concluída.",
+      "properties": {
+        "tentativa": {
+          "maximum": 3,
+          "minimum": 1,
+          "title": "Tentativa",
+          "type": "integer"
+        },
+        "recebedor": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Recebedor",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tentativa",
+        "recebedor"
+      ],
+      "title": "PayloadEntregue",
+      "type": "object"
+    },
+    "PayloadPagamentoAprovado": {
+      "additionalProperties": false,
+      "description": "Pagamento confirmado em reais.",
+      "properties": {
+        "valor": {
+          "exclusiveMinimum": 0,
+          "title": "Valor",
+          "type": "number"
+        },
+        "metodo": {
+          "default": "pix",
+          "enum": [
+            "pix",
+            "cartao",
+            "boleto"
+          ],
+          "title": "Metodo",
+          "type": "string"
+        }
+      },
+      "required": [
+        "valor"
+      ],
+      "title": "PayloadPagamentoAprovado",
+      "type": "object"
+    },
+    "PayloadPagamentoRecusado": {
+      "additionalProperties": false,
+      "description": "Motivo informado pelo provedor de pagamentos.",
+      "properties": {
+        "motivo": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Motivo",
+          "type": "string"
+        }
+      },
+      "required": [
+        "motivo"
+      ],
+      "title": "PayloadPagamentoRecusado",
+      "type": "object"
+    },
+    "PayloadCriado": {
+      "additionalProperties": false,
+      "description": "Dados do pedido criado na loja.",
+      "properties": {
+        "cliente": {
+          "default": "Carla",
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Cliente",
+          "type": "string"
+        },
+        "valor": {
+          "default": 111.88,
+          "exclusiveMinimum": 0,
+          "title": "Valor",
+          "type": "number"
+        },
+        "origem": {
+          "$ref": "#/$defs/Localidade"
+        },
+        "destino": {
+          "$ref": "#/$defs/Localidade"
+        },
+        "peso_kg": {
+          "exclusiveMinimum": 0,
+          "maximum": 30000,
+          "title": "Peso Kg",
+          "type": "number"
+        },
+        "descricao": {
+          "maxLength": 200,
+          "title": "Descricao",
+          "type": "string"
+        },
+        "centro_distribuicao": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Centro Distribuicao",
+          "type": "string"
+        }
+      },
+      "required": [
+        "origem",
+        "destino",
+        "peso_kg",
+        "descricao",
+        "centro_distribuicao"
+      ],
+      "title": "PayloadCriado",
+      "type": "object"
+    },
+    "PayloadSaiuParaEntrega": {
+      "additionalProperties": false,
+      "description": "Saída para entrega de última milha.",
+      "properties": {
+        "veiculo_id": {
+          "pattern": "^VEI-[0-9]{4}$",
+          "title": "Veiculo Id",
+          "type": "string"
+        },
+        "tentativa": {
+          "maximum": 3,
+          "minimum": 1,
+          "title": "Tentativa",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "veiculo_id",
+        "tentativa"
+      ],
+      "title": "PayloadSaiuParaEntrega",
+      "type": "object"
+    },
+    "PayloadEnviado": {
+      "additionalProperties": false,
+      "description": "Dados do embarque no veículo de transferência.",
+      "properties": {
+        "transportadora": {
+          "default": "Correios",
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Transportadora",
+          "type": "string"
+        },
+        "rastreio": {
+          "default": "BR724488420",
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Rastreio",
+          "type": "string"
+        },
+        "veiculo_id": {
+          "pattern": "^VEI-[0-9]{4}$",
+          "title": "Veiculo Id",
+          "type": "string"
+        },
+        "previsao_entrega": {
+          "format": "date-time",
+          "title": "Previsao Entrega",
+          "type": "string",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "veiculo_id",
+        "previsao_entrega"
+      ],
+      "title": "PayloadEnviado",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "pedido.criado": "#/$defs/EventoCriado",
+      "pedido.em_transito": "#/$defs/EventoEmTransito",
+      "pedido.entrega_falhou": "#/$defs/EventoEntregaFalhou",
+      "pedido.entregue": "#/$defs/EventoEntregue",
+      "pedido.enviado": "#/$defs/EventoEnviado",
+      "pedido.pagamento_aprovado": "#/$defs/EventoPagamentoAprovado",
+      "pedido.pagamento_recusado": "#/$defs/EventoPagamentoRecusado",
+      "pedido.saiu_para_entrega": "#/$defs/EventoSaiuParaEntrega"
+    },
+    "propertyName": "event_type"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/EventoCriado"
+    },
+    {
+      "$ref": "#/$defs/EventoPagamentoAprovado"
+    },
+    {
+      "$ref": "#/$defs/EventoPagamentoRecusado"
+    },
+    {
+      "$ref": "#/$defs/EventoEnviado"
+    },
+    {
+      "$ref": "#/$defs/EventoEmTransito"
+    },
+    {
+      "$ref": "#/$defs/EventoSaiuParaEntrega"
+    },
+    {
+      "$ref": "#/$defs/EventoEntregue"
+    },
+    {
+      "$ref": "#/$defs/EventoEntregaFalhou"
+    }
+  ],
+  "properties": {
+    "event_type": {
+      "enum": [
+        "pedido.criado",
+        "pedido.pagamento_aprovado",
+        "pedido.pagamento_recusado",
+        "pedido.enviado",
+        "pedido.em_transito",
+        "pedido.saiu_para_entrega",
+        "pedido.entregue",
+        "pedido.entrega_falhou"
+      ]
+    }
+  }
+}

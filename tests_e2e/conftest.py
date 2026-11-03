@@ -15,7 +15,7 @@ from typing import Any
 import httpx
 import pytest
 
-from contratos import EventoCarga
+from contratos import EventoPedido
 from simulador.adapters.escritor_arquivo import EscritorArquivo
 from simulador.config import ConfigSimulador
 from simulador.dominio.gerador import Gerador
@@ -39,7 +39,7 @@ def _env() -> dict[str, str]:
 ENV = _env()
 URL_CONTROLE = f"http://localhost:{ENV.get('CONTROLE_PORTA', '8001')}"
 URL_CONSULTA = f"http://localhost:{ENV.get('CONSULTA_PORTA', '8002')}"
-TOPICO = ENV.get("TOPICO_EVENTOS", "transportadora.carga.eventos.v1")
+TOPICO = ENV.get("TOPICO_EVENTOS", "loja.pedido.eventos.v1")
 
 
 def aguardar(condicao: Callable[[], Any], timeout: float, intervalo: float = 1.0) -> Any:
@@ -92,17 +92,17 @@ class GravadorEventos:
     """Gera eventos com o simulador diretamente em `dados/eventos`."""
 
     def __init__(self) -> None:
-        self.eventos: list[EventoCarga] = []
+        self.eventos: list[EventoPedido] = []
 
-    def gravar(self, evento: EventoCarga) -> Path:
+    def gravar(self, evento: EventoPedido) -> Path:
         self.eventos.append(evento)
         return EscritorArquivo(DADOS / "eventos").gravar(evento)
 
     def gerar(
-        self, quantidade: int = 10, cargas: int = 3, seed: int | None = None
-    ) -> list[EventoCarga]:
+        self, quantidade: int = 10, pedidos: int = 3, seed: int | None = None
+    ) -> list[EventoPedido]:
         inicio = len(self.eventos)
-        config = ConfigSimulador(cargas=cargas, max_eventos=quantidade, intervalo_ms=10)
+        config = ConfigSimulador(pedidos=pedidos, max_eventos=quantidade, intervalo_ms=10)
         Simulacao(
             config,
             self,

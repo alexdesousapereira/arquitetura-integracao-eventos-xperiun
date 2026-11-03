@@ -6,7 +6,7 @@ import threading
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from contratos import EventoCarga
+from contratos import EventoPedido
 from simulador.config import ConfigSimulador
 from simulador.dominio.gerador import Gerador
 from simulador.servico import Simulacao
@@ -14,9 +14,9 @@ from simulador.servico import Simulacao
 
 class EscritorMemoria:
     def __init__(self) -> None:
-        self.eventos: list[EventoCarga] = []
+        self.eventos: list[EventoPedido] = []
 
-    def gravar(self, evento: EventoCarga) -> Path:
+    def gravar(self, evento: EventoPedido) -> Path:
         self.eventos.append(evento)
         return Path(f"{evento.event_id}.json")
 
@@ -56,7 +56,7 @@ def _simulacao(
 
 def test_respeita_max_eventos() -> None:
     escritor = EscritorMemoria()
-    resumo = _simulacao(escritor, RelogioFalso(), cargas=5, max_eventos=37).executar()
+    resumo = _simulacao(escritor, RelogioFalso(), pedidos=5, max_eventos=37).executar()
     assert resumo.eventos_gerados == 37
     assert len(escritor.eventos) == 37
 
@@ -71,24 +71,24 @@ def test_padrao_gera_dez_eventos_e_encerra() -> None:
 def test_respeita_duracao() -> None:
     relogio = RelogioFalso()
     _simulacao(
-        EscritorMemoria(), relogio, cargas=3, intervalo_ms=500, duracao_s=10, max_eventos=1000
+        EscritorMemoria(), relogio, pedidos=3, intervalo_ms=500, duracao_s=10, max_eventos=1000
     ).executar()
     assert 10 <= relogio.monotonico < 11
 
 
-def test_mantem_n_cargas_ativas_e_repoe_concluidas() -> None:
+def test_mantem_n_pedidos_ativas_e_repoe_concluidos() -> None:
     escritor = EscritorMemoria()
-    simulacao = _simulacao(escritor, RelogioFalso(), cargas=4, max_eventos=400)
+    simulacao = _simulacao(escritor, RelogioFalso(), pedidos=4, max_eventos=400)
     resumo = simulacao.executar()
-    assert simulacao.cargas_ativas == 4
-    assert resumo.cargas_concluidas > 4
-    assert len({e.carga_id for e in escritor.eventos}) > 4
+    assert simulacao.pedidos_ativos == 4
+    assert resumo.pedidos_concluidos > 4
+    assert len({e.pedido_id for e in escritor.eventos}) > 4
 
 
-def test_eventos_de_cargas_distintas_intercalados() -> None:
+def test_eventos_de_pedidos_distintas_intercalados() -> None:
     escritor = EscritorMemoria()
-    _simulacao(escritor, RelogioFalso(), cargas=10, max_eventos=60).executar()
-    primeiras = [e.carga_id for e in escritor.eventos[:20]]
+    _simulacao(escritor, RelogioFalso(), pedidos=10, max_eventos=60).executar()
+    primeiras = [e.pedido_id for e in escritor.eventos[:20]]
     trocas = sum(1 for a, b in itertools.pairwise(primeiras) if a != b)
     assert trocas >= 5
 
@@ -105,7 +105,7 @@ def test_parada_solicitada_encerra_apos_ciclo() -> None:
 
     relogio.dormir = dormir_e_parar  # type: ignore[method-assign]
     escritor = EscritorMemoria()
-    _simulacao(escritor, relogio, parar, cargas=3, intervalo_ms=500).executar()
+    _simulacao(escritor, relogio, parar, pedidos=3, intervalo_ms=500).executar()
     assert parar.is_set()
     assert 0 < len(escritor.eventos) < 20
 
@@ -123,18 +123,18 @@ def test_continuo_ignora_limites_ate_a_parada() -> None:
     relogio.dormir = dormir_e_parar  # type: ignore[method-assign]
     escritor = EscritorMemoria()
     simulacao = _simulacao(
-        escritor, relogio, parar, cargas=3, intervalo_ms=500, duracao_s=5, continuo=True
+        escritor, relogio, parar, pedidos=3, intervalo_ms=500, duracao_s=5, continuo=True
     )
     simulacao.executar()
     assert relogio.monotonico >= 30  # ignorou duracao_s=5
     assert len(escritor.eventos) > 10  # ignorou o padrão de 10 eventos
 
 
-def test_ordem_por_carga_preservada() -> None:
+def test_ordem_por_pedido_preservada() -> None:
     escritor = EscritorMemoria()
-    _simulacao(escritor, RelogioFalso(), cargas=6, max_eventos=200).executar()
-    por_carga: dict[str, list[datetime]] = {}
+    _simulacao(escritor, RelogioFalso(), pedidos=6, max_eventos=200).executar()
+    por_pedido: dict[str, list[datetime]] = {}
     for evento in escritor.eventos:
-        por_carga.setdefault(evento.carga_id, []).append(evento.occurred_at)
-    for ocorrencias in por_carga.values():
+        por_pedido.setdefault(evento.pedido_id, []).append(evento.occurred_at)
+    for ocorrencias in por_pedido.values():
         assert ocorrencias == sorted(ocorrencias)

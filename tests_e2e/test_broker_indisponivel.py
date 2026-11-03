@@ -19,9 +19,9 @@ def _compose(*args: str) -> None:
     subprocess.run(["docker", "compose", *args], cwd=RAIZ, check=True, capture_output=True)
 
 
-def _visivel(consulta: httpx.Client, event_id: str, carga_id: str) -> bool:
+def _visivel(consulta: httpx.Client, event_id: str, pedido_id: str) -> bool:
     try:
-        resposta = consulta.get(f"/api/v1/cargas/{carga_id}/eventos")
+        resposta = consulta.get(f"/api/v1/pedidos/{pedido_id}/eventos")
     except httpx.HTTPError:
         return False
     if resposta.status_code != httpx.codes.OK:
@@ -49,7 +49,7 @@ def test_queda_do_broker_e_retomada_sem_perda(
 
     aguardar(lambda: ingestao_ativa.get("/health/ready").status_code == httpx.codes.OK, timeout=120)
     aguardar(
-        lambda: all(_visivel(consulta, str(e.event_id), e.carga_id) for e in eventos),
+        lambda: all(_visivel(consulta, str(e.event_id), e.pedido_id) for e in eventos),
         timeout=180,
         intervalo=3,
     )

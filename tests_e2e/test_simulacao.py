@@ -15,7 +15,7 @@ from tests_e2e.conftest import GravadorEventos, aguardar
 
 pytestmark = pytest.mark.e2e
 
-CARGAS = 3
+PEDIDOS = 3
 EVENTOS = 10
 P95_MAXIMO_S = 60.0
 
@@ -23,13 +23,13 @@ P95_MAXIMO_S = 60.0
 def test_simulacao_entrega_todos_os_eventos(
     ingestao_ativa: httpx.Client, consulta: httpx.Client, gravador: GravadorEventos
 ) -> None:
-    eventos = gravador.gerar(EVENTOS, cargas=CARGAS)
+    eventos = gravador.gerar(EVENTOS, pedidos=PEDIDOS)
     pendentes = {str(e.event_id): e for e in eventos}
     latencias: list[float] = []
 
     def todos_visiveis() -> bool:
-        for carga_id in {e.carga_id for e in pendentes.values()}:
-            resposta = consulta.get(f"/api/v1/cargas/{carga_id}/eventos")
+        for pedido_id in {e.pedido_id for e in pendentes.values()}:
+            resposta = consulta.get(f"/api/v1/pedidos/{pedido_id}/eventos")
             if resposta.status_code != httpx.codes.OK:
                 continue
             agora = datetime.now(UTC)

@@ -11,9 +11,9 @@ from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
 from api_consulta.observabilidade import correlation_id_var
-from api_consulta.services.projecao import CargaNaoEncontradaError
+from api_consulta.services.projecao import PedidoNaoEncontradaError
 
-TIPO_BASE = "https://transportadora.local/problemas/"
+TIPO_BASE = "https://loja.local/problemas/"
 MEDIA_TYPE = "application/problem+json"
 
 
@@ -57,14 +57,14 @@ def doc_problema(descricao: str) -> dict[str, Any]:
 def registrar_handlers(app: FastAPI) -> None:
     """Traduz exceções de domínio e do framework para Problem Details."""
 
-    @app.exception_handler(CargaNaoEncontradaError)
-    async def _nao_encontrada(request: Request, exc: CargaNaoEncontradaError) -> JSONResponse:
+    @app.exception_handler(PedidoNaoEncontradaError)
+    async def _nao_encontrada(request: Request, exc: PedidoNaoEncontradaError) -> JSONResponse:
         return resposta_problema(
             request,
             404,
-            "carga-nao-encontrada",
-            "Carga não encontrada",
-            f"A carga {exc} não existe ou todos os seus eventos saíram da janela de retenção.",
+            "pedido-nao-encontrada",
+            "Pedido não encontrada",
+            f"A pedido {exc} não existe ou todos os seus eventos saíram da janela de retenção.",
         )
 
     @app.exception_handler(RequestValidationError)

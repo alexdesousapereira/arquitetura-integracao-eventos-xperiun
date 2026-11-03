@@ -17,13 +17,7 @@ from api_consulta.services.projecao import Projecao
 from contratos import carregar_schema
 
 RAIZ = Path(__file__).resolve().parents[3]
-CONTRATO = (
-    RAIZ
-    / "specs"
-    / "001-pipeline-eventos-transportadora"
-    / "contracts"
-    / "api-consulta.openapi.yaml"
-)
+CONTRATO = RAIZ / "specs" / "001-pipeline-eventos-loja" / "contracts" / "api-consulta.openapi.yaml"
 METODOS = {"get", "put", "post", "delete"}
 
 
@@ -52,17 +46,17 @@ def test_paths_metodos_e_codigos_conferem() -> None:
 def test_parametros_conferem() -> None:
     contrato = yaml.safe_load(CONTRATO.open())
     gerado = _gerado()
-    params = {p["name"] for p in gerado["paths"]["/api/v1/cargas"]["get"]["parameters"]}
-    esperado = {p["name"] for p in contrato["paths"]["/api/v1/cargas"]["get"]["parameters"]}
+    params = {p["name"] for p in gerado["paths"]["/api/v1/pedidos"]["get"]["parameters"]}
+    esperado = {p["name"] for p in contrato["paths"]["/api/v1/pedidos"]["get"]["parameters"]}
     assert params == esperado
 
 
 def test_schemas_obrigatorios_conferem() -> None:
     contrato = yaml.safe_load(CONTRATO.open())["components"]["schemas"]
     gerado = _gerado()["components"]["schemas"]
-    for nome in ("Carga", "PaginaCargas", "Resumo", "StatusConsumo", "Problema"):
+    for nome in ("Pedido", "PaginaPedidos", "Resumo", "StatusConsumo", "Problema"):
         assert set(gerado[nome].get("required", [])) == set(contrato[nome]["required"]), nome
-    assert set(gerado["StatusCarga"]["enum"]) == set(contrato["StatusCarga"]["enum"])
+    assert set(gerado["StatusPedido"]["enum"]) == set(contrato["StatusPedido"]["enum"])
 
 
 async def test_eventos_do_historico_validam_no_json_schema(relogio, gerar_jornada) -> None:  # type: ignore[no-untyped-def]
@@ -74,7 +68,7 @@ async def test_eventos_do_historico_validam_no_json_schema(relogio, gerar_jornad
     app.dependency_overrides[obter_projecao] = lambda: projecao
     app.dependency_overrides[obter_consumidor] = lambda: None
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t") as c:
-        r = await c.get(f"/api/v1/cargas/{eventos[0].carga_id}/eventos")
+        r = await c.get(f"/api/v1/pedidos/{eventos[0].pedido_id}/eventos")
     validador = Draft202012Validator(carregar_schema(), format_checker=FormatChecker())
     for item in r.json()["eventos"]:
         validador.validate(item)

@@ -9,7 +9,7 @@ import pytest
 from api_consulta.adapters.mensagem import Mensagem
 from api_consulta.services.processador import Processador
 from api_consulta.services.projecao import Projecao
-from contratos import EventoCargaAdapter
+from contratos import EventoPedidoAdapter
 
 
 class DLQFalso:
@@ -25,13 +25,13 @@ class DLQFalso:
 
 def _msg(valor: bytes | None, headers: list[tuple[str, bytes]] | None = None) -> Mensagem:
     return Mensagem(
-        topic="t", partition=2, offset=41, key=b"CRG-1", value=valor, headers=headers or []
+        topic="t", partition=2, offset=41, key=b"PED-1", value=valor, headers=headers or []
     )
 
 
 def _valido(gerar_jornada: Any, relogio: Any) -> bytes:
     evento = gerar_jornada(1, inicio=relogio())[0]
-    return EventoCargaAdapter.dump_json(evento)
+    return EventoPedidoAdapter.dump_json(evento)
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ async def test_nao_json_vai_para_dlq(projecao, valor) -> None:  # type: ignore[n
 
 async def test_fora_do_contrato_vai_para_dlq_com_motivo_truncado(projecao) -> None:  # type: ignore[no-untyped-def]
     dlq = DLQFalso()
-    valor = json.dumps({"event_type": "carga.recebida", "lixo": "x" * 5000}).encode()
+    valor = json.dumps({"event_type": "pedido.criado", "lixo": "x" * 5000}).encode()
     await Processador(projecao, dlq).processar(_msg(valor))
     _, tipo, motivo = dlq.enviadas[0]
     assert tipo == "CONTRATO_INVALIDO"

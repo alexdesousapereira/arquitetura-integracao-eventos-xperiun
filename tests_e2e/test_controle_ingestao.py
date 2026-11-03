@@ -23,7 +23,7 @@ def test_arquivos_validos_vao_para_backup(
 ) -> None:
     eventos = gravador.gerar(10)
     nomes = {
-        f"{e.occurred_at.strftime('%Y%m%dT%H%M%S%f')}Z_{e.carga_id}_{e.event_id}.json"
+        f"{e.occurred_at.strftime('%Y%m%dT%H%M%S%f')}Z_{e.pedido_id}_{e.event_id}.json"
         for e in eventos
     }
     aguardar(lambda: nomes <= arquivos("backup"), timeout=30)

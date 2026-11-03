@@ -1,1 +1,1 @@
-"""API de consulta de cargas."""
+"""API de consulta de pedidos."""

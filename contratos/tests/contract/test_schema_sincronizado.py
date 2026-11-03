@@ -7,15 +7,11 @@ from typing import Any
 import pytest
 from jsonschema import Draft202012Validator, FormatChecker
 
-from contratos import EventoCargaAdapter, carregar_schema
+from contratos import EventoPedidoAdapter, carregar_schema
 
 RAIZ = Path(__file__).resolve().parents[3]
 SCHEMA_SPEC = (
-    RAIZ
-    / "specs"
-    / "001-pipeline-eventos-transportadora"
-    / "contracts"
-    / "evento-carga.schema.json"
+    RAIZ / "specs" / "001-pipeline-eventos-loja" / "contracts" / "evento-pedido.schema.json"
 )
 FIXTURES_V1 = Path(__file__).parent / "fixtures" / "v1"
 
@@ -31,8 +27,8 @@ def test_schema_e_valido() -> None:
 
 
 def test_modelo_gera_json_valido_no_schema(evento_valido: dict[str, Any]) -> None:
-    evento = EventoCargaAdapter.validate_python(evento_valido)
-    VALIDADOR.validate(EventoCargaAdapter.dump_python(evento, mode="json"))
+    evento = EventoPedidoAdapter.validate_python(evento_valido)
+    VALIDADOR.validate(EventoPedidoAdapter.dump_python(evento, mode="json"))
 
 
 def test_schema_rejeita_invalidos(evento_invalido: dict[str, Any]) -> None:
@@ -44,7 +40,7 @@ def test_fixtures_v1_continuam_validas(arquivo: Path) -> None:
     """Compatibilidade retroativa: eventos v1 publicados devem continuar válidos."""
     dados = json.loads(arquivo.read_text(encoding="utf-8"))
     VALIDADOR.validate(dados)
-    EventoCargaAdapter.validate_python(dados)
+    EventoPedidoAdapter.validate_python(dados)
 
 
 def test_existe_fixture_para_cada_tipo() -> None:

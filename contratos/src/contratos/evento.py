@@ -1,6 +1,6 @@
-"""Modelos Pydantic do evento de carga (contrato v1).
+"""Modelos Pydantic do evento de pedido (contrato v1).
 
-Espelham `schemas/evento-carga.v1.schema.json`. O teste de contrato garante que os dois
+Espelham `schemas/evento-pedido.v1.schema.json`. O teste de contrato garante que os dois
 permanecem equivalentes.
 """
 
@@ -28,14 +28,16 @@ TOLERANCIA_FUTURO = timedelta(minutes=5)
 
 
 class TipoEvento(StrEnum):
-    """Tipos de evento do ciclo de vida de uma carga."""
+    """Tipos de evento do ciclo de vida de um pedido."""
 
-    RECEBIDA = "carga.recebida"
-    SAIU_PARA_TRANSPORTE = "carga.saiu_para_transporte"
-    EM_TRANSITO = "carga.em_transito"
-    SAIU_PARA_ENTREGA = "carga.saiu_para_entrega"
-    ENTREGUE = "carga.entregue"
-    ENTREGA_FALHOU = "carga.entrega_falhou"
+    CRIADO = "pedido.criado"
+    PAGAMENTO_APROVADO = "pedido.pagamento_aprovado"
+    PAGAMENTO_RECUSADO = "pedido.pagamento_recusado"
+    ENVIADO = "pedido.enviado"
+    EM_TRANSITO = "pedido.em_transito"
+    SAIU_PARA_ENTREGA = "pedido.saiu_para_entrega"
+    ENTREGUE = "pedido.entregue"
+    ENTREGA_FALHOU = "pedido.entrega_falhou"
 
 
 class MotivoFalha(StrEnum):
@@ -81,7 +83,7 @@ Uf = Annotated[str, Field(pattern=r"^[A-Z]{2}$")]
 Cidade = Annotated[str, Field(min_length=1, max_length=100)]
 VeiculoId = Annotated[str, Field(pattern=r"^VEI-[0-9]{4}$")]
 Tentativa = Annotated[int, Field(ge=1, le=3)]
-CargaId = Annotated[str, Field(pattern=r"^CRG-[0-9A-F]{8}$")]
+PedidoId = Annotated[str, Field(pattern=r"^PED-[0-9A-F]{8}$")]
 
 
 class _Modelo(BaseModel):
@@ -104,9 +106,11 @@ class Localizacao(_Modelo):
     uf: Uf
 
 
-class PayloadRecebida(_Modelo):
-    """Dados da carga recebida no centro de distribuição."""
+class PayloadCriado(_Modelo):
+    """Dados do pedido criado na loja."""
 
+    cliente: Annotated[str, Field(min_length=1, max_length=100)] = "Carla"
+    valor: Annotated[float, Field(gt=0)] = 111.88
     origem: Localidade
     destino: Localidade
     peso_kg: Annotated[float, Field(gt=0, le=30000)]
@@ -114,9 +118,11 @@ class PayloadRecebida(_Modelo):
     centro_distribuicao: Cidade
 
 
-class PayloadSaiuParaTransporte(_Modelo):
+class PayloadEnviado(_Modelo):
     """Dados do embarque no veículo de transferência."""
 
+    transportadora: Annotated[str, Field(min_length=1, max_length=100)] = "Correios"
+    rastreio: Annotated[str, Field(min_length=1, max_length=100)] = "BR724488420"
     veiculo_id: VeiculoId
     previsao_entrega: UtcDatetime
 
@@ -155,54 +161,83 @@ class _Envelope(_Modelo):
     occurred_at: OcorridoEm
     source: Annotated[str, Field(min_length=1, max_length=100)]
     correlation_id: UUID
-    carga_id: CargaId
+    pedido_id: PedidoId
 
 
-class EventoRecebida(_Envelope):
-    """Evento `carga.recebida`."""
+class EventoCriado(_Envelope):
+    """Evento `pedido.criado`."""
 
-    event_type: Literal[TipoEvento.RECEBIDA] = TipoEvento.RECEBIDA
-    payload: PayloadRecebida
+    event_type: Literal[TipoEvento.CRIADO] = TipoEvento.CRIADO
+    payload: PayloadCriado
 
 
-class EventoSaiuParaTransporte(_Envelope):
-    """Evento `carga.saiu_para_transporte`."""
+class EventoEnviado(_Envelope):
+    """Evento `pedido.enviado`."""
 
-    event_type: Literal[TipoEvento.SAIU_PARA_TRANSPORTE] = TipoEvento.SAIU_PARA_TRANSPORTE
-    payload: PayloadSaiuParaTransporte
+    event_type: Literal[TipoEvento.ENVIADO] = TipoEvento.ENVIADO
+    payload: PayloadEnviado
 
 
 class EventoEmTransito(_Envelope):
-    """Evento `carga.em_transito`."""
+    """Evento `pedido.em_transito`."""
 
     event_type: Literal[TipoEvento.EM_TRANSITO] = TipoEvento.EM_TRANSITO
     payload: PayloadEmTransito
 
 
 class EventoSaiuParaEntrega(_Envelope):
-    """Evento `carga.saiu_para_entrega`."""
+    """Evento `pedido.saiu_para_entrega`."""
 
     event_type: Literal[TipoEvento.SAIU_PARA_ENTREGA] = TipoEvento.SAIU_PARA_ENTREGA
     payload: PayloadSaiuParaEntrega
 
 
 class EventoEntregue(_Envelope):
-    """Evento `carga.entregue`."""
+    """Evento `pedido.entregue`."""
 
     event_type: Literal[TipoEvento.ENTREGUE] = TipoEvento.ENTREGUE
     payload: PayloadEntregue
 
 
 class EventoEntregaFalhou(_Envelope):
-    """Evento `carga.entrega_falhou`."""
+    """Evento `pedido.entrega_falhou`."""
 
     event_type: Literal[TipoEvento.ENTREGA_FALHOU] = TipoEvento.ENTREGA_FALHOU
     payload: PayloadEntregaFalhou
 
 
-EventoCarga = Annotated[
-    EventoRecebida
-    | EventoSaiuParaTransporte
+class PayloadPagamentoAprovado(_Modelo):
+    """Pagamento confirmado em reais."""
+
+    valor: Annotated[float, Field(gt=0)]
+    metodo: Literal["pix", "cartao", "boleto"] = "pix"
+
+
+class PayloadPagamentoRecusado(_Modelo):
+    """Motivo informado pelo provedor de pagamentos."""
+
+    motivo: Annotated[str, Field(min_length=1, max_length=200)]
+
+
+class EventoPagamentoAprovado(_Envelope):
+    """Pagamento aprovado para o pedido."""
+
+    event_type: Literal[TipoEvento.PAGAMENTO_APROVADO] = TipoEvento.PAGAMENTO_APROVADO
+    payload: PayloadPagamentoAprovado
+
+
+class EventoPagamentoRecusado(_Envelope):
+    """Pagamento recusado; encerra o fluxo simulado."""
+
+    event_type: Literal[TipoEvento.PAGAMENTO_RECUSADO] = TipoEvento.PAGAMENTO_RECUSADO
+    payload: PayloadPagamentoRecusado
+
+
+EventoPedido = Annotated[
+    EventoCriado
+    | EventoPagamentoAprovado
+    | EventoPagamentoRecusado
+    | EventoEnviado
     | EventoEmTransito
     | EventoSaiuParaEntrega
     | EventoEntregue
@@ -211,25 +246,25 @@ EventoCarga = Annotated[
 ]
 """União discriminada por `event_type` com todos os eventos do contrato v1."""
 
-EventoCargaAdapter: TypeAdapter[EventoCarga] = TypeAdapter(EventoCarga)
+EventoPedidoAdapter: TypeAdapter[EventoPedido] = TypeAdapter(EventoPedido)
 
 
-def parse_evento(raw: bytes | str) -> EventoCarga:
+def parse_evento(raw: bytes | str) -> EventoPedido:
     """Valida um evento serializado em JSON contra o contrato.
 
     Raises:
         pydantic.ValidationError: se o JSON for malformado ou estiver fora do contrato.
     """
-    return EventoCargaAdapter.validate_json(raw)
+    return EventoPedidoAdapter.validate_json(raw)
 
 
-def serializar_evento(evento: EventoCarga) -> bytes:
+def serializar_evento(evento: EventoPedido) -> bytes:
     """Serializa o evento em JSON UTF-8 conforme o contrato."""
-    return EventoCargaAdapter.dump_json(evento)
+    return EventoPedidoAdapter.dump_json(evento)
 
 
 def carregar_schema() -> dict[str, Any]:
     """Retorna o JSON Schema v1 versionado junto ao pacote."""
-    texto = files("contratos").joinpath("schemas/evento-carga.v1.schema.json").read_text("utf-8")
+    texto = files("contratos").joinpath("schemas/evento-pedido.v1.schema.json").read_text("utf-8")
     schema: dict[str, Any] = json.loads(texto)
     return schema

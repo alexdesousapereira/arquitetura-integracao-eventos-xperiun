@@ -1,0 +1,1155 @@
+openapi: 3.1.0
+info:
+  title: API de Consulta de Pedidos
+  description: Consome o tópico `loja.pedido.eventos.v1` e expõe o status atual, o
+    histórico de eventos e indicadores agregados dos pedidos. Dados mantidos em memória,
+    limitados à mesma janela de retenção do tópico (15 min, pelo `occurred_at`).
+  version: 1.0.0
+paths:
+  /api/v1/pedidos:
+    get:
+      tags:
+      - pedidos
+      summary: Listar Pedidos
+      description: Lista pedidos com filtro opcional por status (mais recentes primeiro).
+      operationId: listarPedidos
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/StatusPedido'
+          - type: 'null'
+          title: Status
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 500
+          minimum: 1
+          default: 50
+          title: Size
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaPedidos'
+        '422':
+          description: Parâmetro inválido
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/pedidos/{pedido_id}:
+    get:
+      tags:
+      - pedidos
+      summary: Obter Pedido
+      description: Detalhe e status atual de um pedido.
+      operationId: obterPedido
+      parameters:
+      - name: pedido_id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^PED-[0-9A-F]{8}$
+          title: Pedido Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '404':
+          description: Pedido não encontrada (inexistente ou com todos os eventos
+            fora da janela de retenção)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '422':
+          description: Parâmetro inválido
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/pedidos/{pedido_id}/eventos:
+    get:
+      tags:
+      - pedidos
+      summary: Listar Eventos
+      description: Histórico de eventos do pedido em ordem cronológica.
+      operationId: listarEventosPedido
+      parameters:
+      - name: pedido_id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^PED-[0-9A-F]{8}$
+          title: Pedido Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoricoPedido'
+        '404':
+          description: Pedido não encontrada (inexistente ou com todos os eventos
+            fora da janela de retenção)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '422':
+          description: Parâmetro inválido
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+  /api/v1/resumo:
+    get:
+      tags:
+      - pedidos
+      summary: Obter Resumo
+      description: Indicadores agregados.
+      operationId: obterResumo
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resumo'
+  /api/v1/pedidos/{pedido_id}/mensagens:
+    get:
+      tags:
+      - pedidos
+      summary: Listar Mensagens
+      description: Mensagens do pedido, sem duplicatas e em ordem cronológica.
+      operationId: listar_mensagens_api_v1_pedidos__pedido_id__mensagens_get
+      parameters:
+      - name: pedido_id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^PED-[0-9A-F]{8}$
+          title: Pedido Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MensagemCanal'
+                title: Response Listar Mensagens Api V1 Pedidos  Pedido Id  Mensagens
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/consumo/status:
+    get:
+      tags:
+      - consumo
+      summary: Status Consumo
+      description: Status do consumo do tópico (lag por partição).
+      operationId: obterStatusConsumo
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusConsumo'
+  /health/live:
+    get:
+      tags:
+      - saude
+      summary: Live
+      description: Processo vivo.
+      operationId: live
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Saude'
+  /health/ready:
+    get:
+      tags:
+      - saude
+      summary: Ready
+      description: Pronto com o broker acessível e o catch-up inicial do tópico concluído.
+      operationId: ready
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Saude'
+        '503':
+          description: Não pronto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Saude'
+  /metrics:
+    get:
+      tags:
+      - saude
+      summary: Metrics
+      description: Métricas no formato Prometheus.
+      operationId: metrics
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  schemas:
+    EventoEmTransito:
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          title: Event Id
+        event_version:
+          type: integer
+          const: 1
+          title: Event Version
+          default: 1
+        occurred_at:
+          type: string
+          title: Occurred At
+        source:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Source
+        correlation_id:
+          type: string
+          format: uuid
+          title: Correlation Id
+        pedido_id:
+          type: string
+          pattern: ^PED-[0-9A-F]{8}$
+          title: Pedido Id
+        event_type:
+          type: string
+          const: pedido.em_transito
+          title: Event Type
+          default: pedido.em_transito
+        payload:
+          $ref: '#/components/schemas/PayloadEmTransito'
+      additionalProperties: false
+      type: object
+      required:
+      - event_id
+      - occurred_at
+      - source
+      - correlation_id
+      - pedido_id
+      - payload
+      title: EventoEmTransito
+      description: Evento `pedido.em_transito`.
+    EventoEntregaFalhou:
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          title: Event Id
+        event_version:
+          type: integer
+          const: 1
+          title: Event Version
+          default: 1
+        occurred_at:
+          type: string
+          title: Occurred At
+        source:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Source
+        correlation_id:
+          type: string
+          format: uuid
+          title: Correlation Id
+        pedido_id:
+          type: string
+          pattern: ^PED-[0-9A-F]{8}$
+          title: Pedido Id
+        event_type:
+          type: string
+          const: pedido.entrega_falhou
+          title: Event Type
+          default: pedido.entrega_falhou
+        payload:
+          $ref: '#/components/schemas/PayloadEntregaFalhou'
+      additionalProperties: false
+      type: object
+      required:
+      - event_id
+      - occurred_at
+      - source
+      - correlation_id
+      - pedido_id
+      - payload
+      title: EventoEntregaFalhou
+      description: Evento `pedido.entrega_falhou`.
+    EventoEntregue:
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          title: Event Id
+        event_version:
+          type: integer
+          const: 1
+          title: Event Version
+          default: 1
+        occurred_at:
+          type: string
+          title: Occurred At
+        source:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Source
+        correlation_id:
+          type: string
+          format: uuid
+          title: Correlation Id
+        pedido_id:
+          type: string
+          pattern: ^PED-[0-9A-F]{8}$
+          title: Pedido Id
+        event_type:
+          type: string
+          const: pedido.entregue
+          title: Event Type
+          default: pedido.entregue
+        payload:
+          $ref: '#/components/schemas/PayloadEntregue'
+      additionalProperties: false
+      type: object
+      required:
+      - event_id
+      - occurred_at
+      - source
+      - correlation_id
+      - pedido_id
+      - payload
+      title: EventoEntregue
+      description: Evento `pedido.entregue`.
+    EventoPagamentoAprovado:
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          title: Event Id
+        event_version:
+          type: integer
+          const: 1
+          title: Event Version
+          default: 1
+        occurred_at:
+          type: string
+          title: Occurred At
+        source:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Source
+        correlation_id:
+          type: string
+          format: uuid
+          title: Correlation Id
+        pedido_id:
+          type: string
+          pattern: ^PED-[0-9A-F]{8}$
+          title: Pedido Id
+        event_type:
+          type: string
+          const: pedido.pagamento_aprovado
+          title: Event Type
+          default: pedido.pagamento_aprovado
+        payload:
+          $ref: '#/components/schemas/PayloadPagamentoAprovado'
+      additionalProperties: false
+      type: object
+      required:
+      - event_id
+      - occurred_at
+      - source
+      - correlation_id
+      - pedido_id
+      - payload
+      title: EventoPagamentoAprovado
+      description: Pagamento aprovado para o pedido.
+    EventoPagamentoRecusado:
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          title: Event Id
+        event_version:
+          type: integer
+          const: 1
+          title: Event Version
+          default: 1
+        occurred_at:
+          type: string
+          title: Occurred At
+        source:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Source
+        correlation_id:
+          type: string
+          format: uuid
+          title: Correlation Id
+        pedido_id:
+          type: string
+          pattern: ^PED-[0-9A-F]{8}$
+          title: Pedido Id
+        event_type:
+          type: string
+          const: pedido.pagamento_recusado
+          title: Event Type
+          default: pedido.pagamento_recusado
+        payload:
+          $ref: '#/components/schemas/PayloadPagamentoRecusado'
+      additionalProperties: false
+      type: object
+      required:
+      - event_id
+      - occurred_at
+      - source
+      - correlation_id
+      - pedido_id
+      - payload
+      title: EventoPagamentoRecusado
+      description: Pagamento recusado; encerra o fluxo simulado.
+    EventoCriado:
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          title: Event Id
+        event_version:
+          type: integer
+          const: 1
+          title: Event Version
+          default: 1
+        occurred_at:
+          type: string
+          title: Occurred At
+        source:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Source
+        correlation_id:
+          type: string
+          format: uuid
+          title: Correlation Id
+        pedido_id:
+          type: string
+          pattern: ^PED-[0-9A-F]{8}$
+          title: Pedido Id
+        event_type:
+          type: string
+          const: pedido.criado
+          title: Event Type
+          default: pedido.criado
+        payload:
+          $ref: '#/components/schemas/PayloadCriado'
+      additionalProperties: false
+      type: object
+      required:
+      - event_id
+      - occurred_at
+      - source
+      - correlation_id
+      - pedido_id
+      - payload
+      title: EventoCriado
+      description: Evento `pedido.criado`.
+    EventoSaiuParaEntrega:
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          title: Event Id
+        event_version:
+          type: integer
+          const: 1
+          title: Event Version
+          default: 1
+        occurred_at:
+          type: string
+          title: Occurred At
+        source:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Source
+        correlation_id:
+          type: string
+          format: uuid
+          title: Correlation Id
+        pedido_id:
+          type: string
+          pattern: ^PED-[0-9A-F]{8}$
+          title: Pedido Id
+        event_type:
+          type: string
+          const: pedido.saiu_para_entrega
+          title: Event Type
+          default: pedido.saiu_para_entrega
+        payload:
+          $ref: '#/components/schemas/PayloadSaiuParaEntrega'
+      additionalProperties: false
+      type: object
+      required:
+      - event_id
+      - occurred_at
+      - source
+      - correlation_id
+      - pedido_id
+      - payload
+      title: EventoSaiuParaEntrega
+      description: Evento `pedido.saiu_para_entrega`.
+    EventoEnviado:
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          title: Event Id
+        event_version:
+          type: integer
+          const: 1
+          title: Event Version
+          default: 1
+        occurred_at:
+          type: string
+          title: Occurred At
+        source:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Source
+        correlation_id:
+          type: string
+          format: uuid
+          title: Correlation Id
+        pedido_id:
+          type: string
+          pattern: ^PED-[0-9A-F]{8}$
+          title: Pedido Id
+        event_type:
+          type: string
+          const: pedido.enviado
+          title: Event Type
+          default: pedido.enviado
+        payload:
+          $ref: '#/components/schemas/PayloadEnviado'
+      additionalProperties: false
+      type: object
+      required:
+      - event_id
+      - occurred_at
+      - source
+      - correlation_id
+      - pedido_id
+      - payload
+      title: EventoEnviado
+      description: Evento `pedido.enviado`.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    HistoricoPedido:
+      properties:
+        pedido_id:
+          type: string
+          title: Pedido Id
+        eventos:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/EventoCriado'
+            - $ref: '#/components/schemas/EventoPagamentoAprovado'
+            - $ref: '#/components/schemas/EventoPagamentoRecusado'
+            - $ref: '#/components/schemas/EventoEnviado'
+            - $ref: '#/components/schemas/EventoEmTransito'
+            - $ref: '#/components/schemas/EventoSaiuParaEntrega'
+            - $ref: '#/components/schemas/EventoEntregue'
+            - $ref: '#/components/schemas/EventoEntregaFalhou'
+            discriminator:
+              propertyName: event_type
+              mapping:
+                pedido.criado: '#/components/schemas/EventoCriado'
+                pedido.em_transito: '#/components/schemas/EventoEmTransito'
+                pedido.entrega_falhou: '#/components/schemas/EventoEntregaFalhou'
+                pedido.entregue: '#/components/schemas/EventoEntregue'
+                pedido.enviado: '#/components/schemas/EventoEnviado'
+                pedido.pagamento_aprovado: '#/components/schemas/EventoPagamentoAprovado'
+                pedido.pagamento_recusado: '#/components/schemas/EventoPagamentoRecusado'
+                pedido.saiu_para_entrega: '#/components/schemas/EventoSaiuParaEntrega'
+          type: array
+          title: Eventos
+      type: object
+      required:
+      - pedido_id
+      - eventos
+      title: HistoricoPedido
+      description: Eventos de um pedido em ordem cronológica.
+    LagParticao:
+      properties:
+        particao:
+          type: integer
+          title: Particao
+        posicao:
+          type: integer
+          title: Posicao
+        offset_final:
+          type: integer
+          title: Offset Final
+        lag:
+          type: integer
+          minimum: 0.0
+          title: Lag
+      type: object
+      required:
+      - particao
+      - posicao
+      - offset_final
+      - lag
+      title: LagParticao
+      description: Posição e atraso de uma partição.
+    Localidade:
+      properties:
+        cidade:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Cidade
+        uf:
+          type: string
+          pattern: ^[A-Z]{2}$
+          title: Uf
+      additionalProperties: false
+      type: object
+      required:
+      - cidade
+      - uf
+      title: Localidade
+      description: Cidade e UF.
+    Localizacao:
+      properties:
+        latitude:
+          type: number
+          maximum: 90.0
+          minimum: -90.0
+          title: Latitude
+        longitude:
+          type: number
+          maximum: 180.0
+          minimum: -180.0
+          title: Longitude
+        cidade:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Cidade
+        uf:
+          type: string
+          pattern: ^[A-Z]{2}$
+          title: Uf
+      additionalProperties: false
+      type: object
+      required:
+      - latitude
+      - longitude
+      - cidade
+      - uf
+      title: Localizacao
+      description: Posição geográfica durante o trajeto.
+    MensagemCanal:
+      properties:
+        event_id:
+          type: string
+          title: Event Id
+        pedido_id:
+          type: string
+          title: Pedido Id
+        html:
+          type: string
+          title: Html
+      type: object
+      required:
+      - event_id
+      - pedido_id
+      - html
+      title: MensagemCanal
+      description: Um aviso por event_id, pronto para envio com parse_mode=HTML.
+    MotivoFalha:
+      type: string
+      enum:
+      - DESTINATARIO_AUSENTE
+      - ENDERECO_NAO_ENCONTRADO
+      - RECUSADA
+      title: MotivoFalha
+      description: Motivos possíveis para uma tentativa de entrega sem sucesso.
+    PaginaPedidos:
+      properties:
+        itens:
+          items:
+            $ref: '#/components/schemas/Pedido'
+          type: array
+          title: Itens
+        page:
+          type: integer
+          title: Page
+        size:
+          type: integer
+          title: Size
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - itens
+      - page
+      - size
+      - total
+      title: PaginaPedidos
+      description: Página da listagem de pedidos.
+    PayloadEmTransito:
+      properties:
+        veiculo_id:
+          type: string
+          pattern: ^VEI-[0-9]{4}$
+          title: Veiculo Id
+        localizacao:
+          $ref: '#/components/schemas/Localizacao'
+      additionalProperties: false
+      type: object
+      required:
+      - veiculo_id
+      - localizacao
+      title: PayloadEmTransito
+      description: Atualização de posição durante o trajeto.
+    PayloadEntregaFalhou:
+      properties:
+        tentativa:
+          type: integer
+          maximum: 3.0
+          minimum: 1.0
+          title: Tentativa
+        motivo:
+          $ref: '#/components/schemas/MotivoFalha'
+      additionalProperties: false
+      type: object
+      required:
+      - tentativa
+      - motivo
+      title: PayloadEntregaFalhou
+      description: Tentativa de entrega sem sucesso.
+    PayloadEntregue:
+      properties:
+        tentativa:
+          type: integer
+          maximum: 3.0
+          minimum: 1.0
+          title: Tentativa
+        recebedor:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Recebedor
+      additionalProperties: false
+      type: object
+      required:
+      - tentativa
+      - recebedor
+      title: PayloadEntregue
+      description: Entrega concluída.
+    PayloadPagamentoAprovado:
+      properties:
+        valor:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Valor
+        metodo:
+          type: string
+          enum:
+          - pix
+          - cartao
+          - boleto
+          title: Metodo
+          default: pix
+      additionalProperties: false
+      type: object
+      required:
+      - valor
+      title: PayloadPagamentoAprovado
+      description: Pagamento confirmado em reais.
+    PayloadPagamentoRecusado:
+      properties:
+        motivo:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Motivo
+      additionalProperties: false
+      type: object
+      required:
+      - motivo
+      title: PayloadPagamentoRecusado
+      description: Motivo informado pelo provedor de pagamentos.
+    PayloadCriado:
+      properties:
+        cliente:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Cliente
+          default: Carla
+        valor:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Valor
+          default: 111.88
+        origem:
+          $ref: '#/components/schemas/Localidade'
+        destino:
+          $ref: '#/components/schemas/Localidade'
+        peso_kg:
+          type: number
+          maximum: 30000.0
+          exclusiveMinimum: 0.0
+          title: Peso Kg
+        descricao:
+          type: string
+          maxLength: 200
+          title: Descricao
+        centro_distribuicao:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Centro Distribuicao
+      additionalProperties: false
+      type: object
+      required:
+      - origem
+      - destino
+      - peso_kg
+      - descricao
+      - centro_distribuicao
+      title: PayloadCriado
+      description: Dados do pedido criado na loja.
+    PayloadSaiuParaEntrega:
+      properties:
+        veiculo_id:
+          type: string
+          pattern: ^VEI-[0-9]{4}$
+          title: Veiculo Id
+        tentativa:
+          type: integer
+          maximum: 3.0
+          minimum: 1.0
+          title: Tentativa
+      additionalProperties: false
+      type: object
+      required:
+      - veiculo_id
+      - tentativa
+      title: PayloadSaiuParaEntrega
+      description: Saída para entrega de última milha.
+    PayloadEnviado:
+      properties:
+        transportadora:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Transportadora
+          default: Correios
+        rastreio:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Rastreio
+          default: BR724488420
+        veiculo_id:
+          type: string
+          pattern: ^VEI-[0-9]{4}$
+          title: Veiculo Id
+        previsao_entrega:
+          type: string
+          title: Previsao Entrega
+      additionalProperties: false
+      type: object
+      required:
+      - veiculo_id
+      - previsao_entrega
+      title: PayloadEnviado
+      description: Dados do embarque no veículo de transferência.
+    Pedido:
+      properties:
+        pedido_id:
+          type: string
+          title: Pedido Id
+        status:
+          $ref: '#/components/schemas/StatusPedido'
+        cliente:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cliente
+        valor:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Valor
+        origem:
+          anyOf:
+          - $ref: '#/components/schemas/Localidade'
+          - type: 'null'
+        destino:
+          anyOf:
+          - $ref: '#/components/schemas/Localidade'
+          - type: 'null'
+        peso_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Peso Kg
+        descricao:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Descricao
+        tentativas_entrega:
+          type: integer
+          minimum: 0.0
+          title: Tentativas Entrega
+        ultima_atualizacao:
+          type: string
+          format: date-time
+          title: Ultima Atualizacao
+        total_eventos:
+          type: integer
+          minimum: 1.0
+          title: Total Eventos
+        correlation_id:
+          type: string
+          title: Correlation Id
+      type: object
+      required:
+      - pedido_id
+      - status
+      - tentativas_entrega
+      - ultima_atualizacao
+      - total_eventos
+      - correlation_id
+      title: Pedido
+      description: Status atual de um pedido.
+    Problema:
+      properties:
+        type:
+          type: string
+          title: Type
+        title:
+          type: string
+          title: Title
+        status:
+          type: integer
+          title: Status
+        detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detail
+        instance:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Instance
+        correlation_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Correlation Id
+      type: object
+      required:
+      - type
+      - title
+      - status
+      title: Problema
+      description: RFC 9457 Problem Details.
+    Resumo:
+      properties:
+        total_pedidos:
+          type: integer
+          title: Total Pedidos
+        total_eventos:
+          type: integer
+          title: Total Eventos
+        pedidos_por_status:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Pedidos Por Status
+          description: Todas as chaves de StatusPedido presentes (0 quando vazio)
+        eventos_duplicados_descartados:
+          type: integer
+          title: Eventos Duplicados Descartados
+        eventos_enviados_dlq:
+          type: integer
+          title: Eventos Enviados Dlq
+        atualizado_em:
+          type: string
+          format: date-time
+          title: Atualizado Em
+      type: object
+      required:
+      - total_pedidos
+      - total_eventos
+      - pedidos_por_status
+      - eventos_duplicados_descartados
+      - eventos_enviados_dlq
+      - atualizado_em
+      title: Resumo
+      description: Indicadores agregados.
+    Saude:
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degradado
+          - indisponivel
+          title: Status
+        dependencias:
+          additionalProperties:
+            type: string
+          type: object
+          title: Dependencias
+          default: {}
+      type: object
+      required:
+      - status
+      title: Saude
+      description: Estado de saúde do serviço e de suas dependências.
+    StatusConsumo:
+      properties:
+        topico:
+          type: string
+          title: Topico
+        catch_up_concluido:
+          type: boolean
+          title: Catch Up Concluido
+        lag_total:
+          type: integer
+          minimum: 0.0
+          title: Lag Total
+        particoes:
+          items:
+            $ref: '#/components/schemas/LagParticao'
+          type: array
+          title: Particoes
+      type: object
+      required:
+      - topico
+      - catch_up_concluido
+      - lag_total
+      - particoes
+      title: StatusConsumo
+      description: Status do consumo do tópico.
+    StatusPedido:
+      type: string
+      enum:
+      - CRIADO
+      - PAGAMENTO_APROVADO
+      - PAGAMENTO_RECUSADO
+      - ENVIADO
+      - EM_TRANSITO
+      - SAIU_PARA_ENTREGA
+      - ENTREGUE
+      - FALHA_ENTREGA
+      title: StatusPedido
+      description: Status atual de um pedido.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

@@ -12,7 +12,7 @@ from controle_ingestao.config import ConfigControle
 from controle_ingestao.main import criar_app
 
 RAIZ = Path(__file__).resolve().parents[3]
-CONTRATOS = RAIZ / "specs" / "001-pipeline-eventos-transportadora" / "contracts"
+CONTRATOS = RAIZ / "specs" / "001-pipeline-eventos-loja" / "contracts"
 METODOS = {"get", "put", "post", "delete"}
 
 
@@ -62,8 +62,6 @@ def test_rotas_mutaveis_declaram_api_key() -> None:
 def test_config_versionada_do_conector_igual_ao_contrato() -> None:
     contrato = json.loads((CONTRATOS / "conector-filepulse.json").read_text())
     operacional = json.loads(
-        (
-            RAIZ / "controle_ingestao" / "conectores" / "arquivos-eventos-transportadora.json"
-        ).read_text()
+        (RAIZ / "controle_ingestao" / "conectores" / "arquivos-eventos-loja.json").read_text()
     )
     assert operacional == contrato["config"]

@@ -17,7 +17,7 @@ from api_consulta.observabilidade import (
     EVENTOS_EXPIRADOS,
 )
 from api_consulta.services.projecao import Projecao, Resultado
-from contratos import EventoCargaAdapter
+from contratos import EventoPedidoAdapter
 
 JSON_INVALIDO = "JSON_INVALIDO"
 LIMITE_MOTIVO = 1000
@@ -61,7 +61,7 @@ class Processador:
             return
         correlacao = extrair_correlation_id(mensagem, dados)
         try:
-            evento = EventoCargaAdapter.validate_python(dados)
+            evento = EventoPedidoAdapter.validate_python(dados)
         except ValidationError as exc:
             await self._desviar(mensagem, CONTRATO_INVALIDO, str(exc), correlacao)
             return
@@ -77,7 +77,7 @@ class Processador:
             "evento_consumido",
             resultado=resultado.name,
             event_id=str(evento.event_id),
-            carga_id=evento.carga_id,
+            pedido_id=evento.pedido_id,
             correlation_id=correlacao,
             particao=mensagem.partition,
             offset=mensagem.offset,

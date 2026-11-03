@@ -1,4 +1,4 @@
-"""US3: configuração do tópico e ordenação por carga (fica neste pacote para reaproveitar as
+"""US3: configuração do tópico e ordenação por pedido (fica neste pacote para reaproveitar as
 fixtures de Kafka da integração)."""
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from aiokafka import AIOKafkaConsumer, AIOKafkaProducer, TopicPartition
 from aiokafka.admin import AIOKafkaAdminClient, NewTopic
 from aiokafka.admin.config_resource import ConfigResource, ConfigResourceType
 
-from contratos import EventoCargaAdapter, parse_evento
+from contratos import EventoPedidoAdapter, parse_evento
 
 pytestmark = pytest.mark.integration
 
@@ -35,7 +35,7 @@ async def test_topico_criado_com_configuracao(kafka: str, topicos: tuple[str, st
     assert configs["cleanup.policy"] == "delete"
 
 
-async def test_ordem_preservada_por_carga(
+async def test_ordem_preservada_por_pedido(
     kafka: str, topicos: tuple[str, str], gerar_jornada: Any
 ) -> None:
     eventos_topico, _ = topicos
@@ -43,14 +43,14 @@ async def test_ordem_preservada_por_carga(
     producer = AIOKafkaProducer(bootstrap_servers=kafka, acks="all")
     await producer.start()
     try:
-        # intercala as cargas, mantendo a ordem dentro de cada uma
+        # intercala as pedidos, mantendo a ordem dentro de cada uma
         for i in range(max(len(j) for j in jornadas)):
             for j in jornadas:
                 if i < len(j):
                     await producer.send(
                         eventos_topico,
-                        key=j[i].carga_id.encode(),
-                        value=EventoCargaAdapter.dump_json(j[i]),
+                        key=j[i].pedido_id.encode(),
+                        value=EventoPedidoAdapter.dump_json(j[i]),
                     )
         await producer.flush()
     finally:
@@ -69,13 +69,13 @@ async def test_ordem_preservada_por_carga(
             for registros in lotes.values():
                 for r in registros:
                     evento = parse_evento(r.value)
-                    assert r.key.decode() == evento.carga_id
-                    recebidos.setdefault(evento.carga_id, []).append(str(evento.event_id))
+                    assert r.key.decode() == evento.pedido_id
+                    recebidos.setdefault(evento.pedido_id, []).append(str(evento.event_id))
                     lidos += 1
     finally:
         await consumer.stop()
     for j in jornadas:
-        assert recebidos[j[0].carga_id] == [str(e.event_id) for e in j]
+        assert recebidos[j[0].pedido_id] == [str(e.event_id) for e in j]
 
 
 RETENCAO_CURTA_MS = 10_000
@@ -86,7 +86,11 @@ async def _offsets(kafka: str, topico: str) -> tuple[int, int]:
     consumer = AIOKafkaConsumer(bootstrap_servers=kafka, group_id=None)
     await consumer.start()
     try:
-        particoes = [TopicPartition(topico, p) for p in consumer.partitions_for_topic(topico) or []]
+        # Um consumer recém-criado ainda não tem os metadados do tópico (`partitions_for_topic`
+        # viria vazio): busca os metadados do cluster, como o `ConsumidorEventos`.
+        metadados = await consumer._client.fetch_all_metadata()
+        ids = metadados.partitions_for_topic(topico) or set()
+        particoes = [TopicPartition(topico, p) for p in ids]
         inicio = await consumer.beginning_offsets(particoes)
         fim = await consumer.end_offsets(particoes)
     finally:
@@ -118,7 +122,7 @@ async def test_retencao_curta_expira_mensagens_do_topico(kafka: str, gerar_jorna
     try:
         for evento in eventos:
             await producer.send(
-                topico, key=evento.carga_id.encode(), value=EventoCargaAdapter.dump_json(evento)
+                topico, key=evento.pedido_id.encode(), value=EventoPedidoAdapter.dump_json(evento)
             )
         await producer.flush()
     finally:

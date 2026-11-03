@@ -1,7 +1,7 @@
 [project]
 name = "contratos"
 version = "1.0.0"
-description = "Contrato do evento de carga da transportadora (modelos Pydantic + JSON Schema v1)."
+description = "Contrato do evento de pedido da loja (modelos Pydantic + JSON Schema v1)."
 requires-python = ">=3.12"
 dependencies = ["pydantic>=2.9"]
 

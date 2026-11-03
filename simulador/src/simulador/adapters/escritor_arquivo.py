@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from contratos import EventoCarga, serializar_evento
+from contratos import EventoPedido, serializar_evento
 
 
 class ErroGravacaoEvento(Exception):
@@ -13,7 +13,7 @@ class ErroGravacaoEvento(Exception):
 
 
 class EscritorArquivo:
-    """Grava cada evento em `<saida>/<occurred_at>_<carga_id>_<event_id>.json`.
+    """Grava cada evento em `<saida>/<occurred_at>_<pedido_id>_<event_id>.json`.
 
     O conteúdo é escrito primeiro em um arquivo oculto (`.<nome>.tmp`), sincronizado em disco e
     então renomeado — o `rename` no mesmo filesystem é atômico, e o conector ignora arquivos
@@ -24,12 +24,12 @@ class EscritorArquivo:
         self.saida = saida
 
     @staticmethod
-    def nome_arquivo(evento: EventoCarga) -> str:
+    def nome_arquivo(evento: EventoPedido) -> str:
         """Nome ordenável lexicograficamente pelo instante de ocorrência."""
         instante = evento.occurred_at.strftime("%Y%m%dT%H%M%S%f")
-        return f"{instante}Z_{evento.carga_id}_{evento.event_id}.json"
+        return f"{instante}Z_{evento.pedido_id}_{evento.event_id}.json"
 
-    def gravar(self, evento: EventoCarga) -> Path:
+    def gravar(self, evento: EventoPedido) -> Path:
         """Grava o evento de forma atômica e retorna o caminho final.
 
         Raises:

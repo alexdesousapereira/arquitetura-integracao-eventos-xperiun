@@ -22,9 +22,9 @@ SAIDA_OK, SAIDA_IO, SAIDA_ARGS = 0, 1, 2
 
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="simulador", description="Gera eventos de cargas como arquivos JSON."
+        prog="simulador", description="Gera eventos de pedidos como arquivos JSON."
     )
-    p.add_argument("--cargas", type=int, help="cargas simultâneas")
+    p.add_argument("--pedidos", type=int, help="pedidos simultâneos")
     p.add_argument("--intervalo-ms", type=int, help="intervalo entre ciclos")
     p.add_argument("--duracao-s", type=int, help="encerra após S segundos (0 = sem limite)")
     p.add_argument("--max-eventos", type=int, help="encerra após N eventos (padrão 10)")
@@ -36,7 +36,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--saida", type=Path, help="pasta de destino dos arquivos JSON")
     p.add_argument("--seed", type=int, help="semente para execução reprodutível")
-    p.add_argument("--prob-falha", type=float, help="probabilidade de falha na entrega")
+    p.add_argument("--prob-falha", type=float, help="probabilidade de recusa do pagamento")
     p.add_argument("--metrics-port", type=int, help="porta HTTP de /metrics (0 = desligado)")
     return p
 

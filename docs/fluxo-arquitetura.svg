@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 580" width="1400" height="580" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1f2937"/>
+    </marker>
+    <marker id="seta-erro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/>
+    </marker>
+    <marker id="seta-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#15803d"/>
+    </marker>
+    <style>
+      .caixa { fill: #ffffff; stroke: #1f2937; stroke-width: 2; }
+      .pasta { fill: #f8fafc; stroke: #1f2937; stroke-width: 2; }
+      .api { fill: #ffffff; stroke: #dc2626; stroke-width: 3; }
+      .kafka { fill: #eff6ff; stroke: #1d4ed8; stroke-width: 2; }
+      .titulo { font-size: 16px; font-weight: 600; fill: #111827; text-anchor: middle; }
+      .sub { font-size: 12px; fill: #374151; text-anchor: middle; }
+      .mono { font-family: Consolas, Menlo, monospace; font-size: 12px; fill: #1e3a8a; text-anchor: middle; }
+      .rotulo { font-size: 12px; fill: #374151; }
+      .linha { stroke: #1f2937; stroke-width: 2; fill: none; marker-end: url(#seta); }
+      .linha-erro { stroke: #b91c1c; stroke-width: 2; fill: none; marker-end: url(#seta-erro); }
+      .linha-ok { stroke: #15803d; stroke-width: 2; fill: none; marker-end: url(#seta-ok); }
+      .tracejada { stroke: #1d4ed8; stroke-width: 1.5; stroke-dasharray: 6 4; fill: none; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="580" fill="#ffffff"/>
+
+  <!-- Simulador -->
+  <rect class="caixa" x="40" y="40" width="190" height="64" rx="10"/>
+  <text class="titulo" x="135" y="68">Simulador</text>
+  <text class="sub" x="135" y="88">1 arquivo JSON por evento</text>
+
+  <!-- dados/eventos -->
+  <rect class="pasta" x="345" y="40" width="190" height="64" rx="10"/>
+  <text class="titulo" x="440" y="68">dados/eventos</text>
+  <text class="sub" x="440" y="88">aguardando ingestão</text>
+
+  <!-- dados/backup -->
+  <rect class="pasta" x="650" y="40" width="190" height="64" rx="10"/>
+  <text class="titulo" x="745" y="68">dados/backup</text>
+  <text class="sub" x="745" y="88">arquivos já publicados</text>
+
+  <!-- dados/erros -->
+  <rect class="pasta" x="40" y="226" width="190" height="64" rx="10"/>
+  <text class="titulo" x="135" y="254">dados/erros</text>
+  <text class="sub" x="135" y="274">JSON inválido</text>
+
+  <!-- Kafka Connect -->
+  <rect class="caixa" x="320" y="210" width="240" height="96" rx="10"/>
+  <text class="titulo" x="440" y="242">Kafka Connect</text>
+  <text class="sub" x="440" y="262">FilePulse · leitura de JSON</text>
+  <text class="sub" x="440" y="282">chave da mensagem = pedido_id</text>
+
+  <!-- Tópico -->
+  <rect class="kafka" x="630" y="210" width="230" height="96" rx="10"/>
+  <text class="titulo" x="745" y="242">Tópico Kafka</text>
+  <text class="mono" x="745" y="264">loja.pedido.eventos.v1</text>
+  <text class="sub" x="745" y="284">retenção 15 min</text>
+
+  <!-- API de consulta (consumidora) -->
+  <rect class="api" x="950" y="210" width="190" height="96" rx="10"/>
+  <text class="titulo" x="1045" y="242">API de consulta</text>
+  <text class="sub" x="1045" y="262">consumidora · :8002</text>
+  <text class="sub" x="1045" y="282">status atual dos pedidos</text>
+
+  <!-- Notificador (bot) -->
+  <rect class="api" x="950" y="40" width="190" height="80" rx="10"/>
+  <text class="titulo" x="1045" y="68">Notificador (bot)</text>
+  <text class="sub" x="1045" y="88">consumer group próprio</text>
+  <text class="sub" x="1045" y="106">commit após o envio</text>
+
+  <!-- Telegram -->
+  <rect class="caixa" x="1210" y="40" width="160" height="80" rx="10"/>
+  <text class="titulo" x="1290" y="74">Telegram</text>
+  <text class="sub" x="1290" y="94">canal / grupo da loja</text>
+
+  <!-- DLQ -->
+  <rect class="kafka" x="950" y="430" width="190" height="70" rx="10"/>
+  <text class="titulo" x="1045" y="458">Tópico DLQ</text>
+  <text class="mono" x="1045" y="480">loja.pedido.eventos-dlq.v1</text>
+
+  <!-- API de controle -->
+  <rect class="api" x="320" y="430" width="240" height="70" rx="10"/>
+  <text class="titulo" x="440" y="460">API de controle</text>
+  <text class="sub" x="440" y="482">opera a ingestão · :8001</text>
+
+  <!-- Partições do tópico -->
+  <rect class="kafka" x="600" y="390" width="270" height="150" rx="14"/>
+  <text class="titulo" x="735" y="416">Partições do tópico</text>
+  <rect class="caixa" x="620" y="432" width="230" height="28" rx="6"/>
+  <text class="sub" x="735" y="451">partição 0</text>
+  <rect class="caixa" x="620" y="466" width="230" height="28" rx="6"/>
+  <text class="sub" x="735" y="485">partição 1</text>
+  <rect class="caixa" x="620" y="500" width="230" height="28" rx="6"/>
+  <text class="sub" x="735" y="519">partição 2</text>
+
+  <!-- Setas -->
+  <path class="linha" d="M230,72 L341,72"/>
+  <text class="rotulo" x="240" y="62">grava</text>
+
+  <path class="linha" d="M440,104 L440,206"/>
+  <text class="rotulo" x="450" y="160">lê arquivo</text>
+
+  <path class="linha-ok" d="M540,210 L700,108"/>
+  <text class="rotulo" x="625" y="170" fill="#15803d">sucesso: move</text>
+
+  <path class="linha-erro" d="M320,258 L234,258"/>
+  <text class="rotulo" x="246" y="248" fill="#b91c1c">erro</text>
+
+  <path class="linha-ok" d="M560,258 L626,258"/>
+  <text class="rotulo" x="566" y="248" fill="#15803d">publica</text>
+
+  <path class="linha" d="M860,258 L946,258"/>
+  <text class="rotulo" x="874" y="248">consome</text>
+
+  <path class="linha" d="M440,430 L440,310"/>
+  <text class="rotulo" x="450" y="365">REST do Connect</text>
+  <text class="rotulo" x="450" y="381">ativar · pausar · retomar</text>
+
+  <path class="linha-erro" d="M1045,306 L1045,426"/>
+  <text class="rotulo" x="1053" y="365" fill="#b91c1c">fora do</text>
+  <text class="rotulo" x="1053" y="381" fill="#b91c1c">contrato</text>
+
+  <path class="tracejada" d="M745,306 L745,390"/>
+
+  <path class="linha" d="M845,210 L990,124"/>
+  <text class="rotulo" x="922" y="186">consome</text>
+
+  <path class="linha-ok" d="M1140,80 L1206,80"/>
+  <text class="rotulo" x="1146" y="70" fill="#15803d">envia</text>
+</svg>
